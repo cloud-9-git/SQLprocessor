@@ -226,6 +226,9 @@ int parse_select(Parser *p, Statement *stmt) {
 int parse_insert(Parser *p, Statement *stmt) {
     stmt->type = STMT_INSERT;
     advance_parser(p); 
+    const char *open_paren;
+    const char *close_paren;
+    int len;
 
     if (!expect_token(p, TOKEN_INTO)) return 0;
     
@@ -234,25 +237,16 @@ int parse_insert(Parser *p, Statement *stmt) {
     advance_parser(p);
 
     if (!expect_token(p, TOKEN_VALUES)) return 0;
-    if (!expect_token(p, TOKEN_LPAREN)) return 0;
-    
-    int start_pos = p->lexer.pos;
-    int paren_level = 1;
-    
-    while (p->lexer.sql[p->lexer.pos]) {
-        if (p->lexer.sql[p->lexer.pos] == '(') paren_level++;
-        if (p->lexer.sql[p->lexer.pos] == ')') paren_level--;
-        if (paren_level == 0) break;
-        p->lexer.pos++;
-    }
-    
-    int len = p->lexer.pos - start_pos;
+    if (p->current_token.type != TOKEN_LPAREN) return 0;
+
+    open_paren = strchr(p->lexer.sql, '(');
+    close_paren = strrchr(p->lexer.sql, ')');
+    if (!open_paren || !close_paren || close_paren <= open_paren) return 0;
+
+    len = (int)(close_paren - open_paren - 1);
     if (len >= sizeof(stmt->row_data)) len = sizeof(stmt->row_data) - 1;
-    strncpy(stmt->row_data, p->lexer.sql + start_pos, len);
+    strncpy(stmt->row_data, open_paren + 1, len);
     stmt->row_data[len] = '\0';
-    
-    p->lexer.pos++; 
-    advance_parser(p); 
 
     return 1;
 }
@@ -543,29 +537,32 @@ void execute_insert(Statement *stmt) {
     
     for (int i = 0; i < tc->col_count; i++) {
         char *val = (i < val_count && vals[i]) ? vals[i] : "";
-        trim_and_unquote(val); 
+        char normalized_val[256];
+        strncpy(normalized_val, val, sizeof(normalized_val) - 1);
+        normalized_val[sizeof(normalized_val) - 1] = '\0';
+        trim_and_unquote(normalized_val); 
         
-        if (tc->cols[i].type == COL_NN && strlen(val) == 0) {
+        if (tc->cols[i].type == COL_NN && strlen(normalized_val) == 0) {
             printf("[실패] INSERT 거부: '%s' (NN 제약).\n", tc->cols[i].name); 
             return;
         }
         
-        if (i == tc->pk_idx && strlen(val) > 0) {
-            new_id = atol(val);
+        if (i == tc->pk_idx && strlen(normalized_val) > 0) {
+            new_id = atol(normalized_val);
             if (find_in_pk_index(tc, new_id) != -1) { 
                 printf("[실패] PK 중복: %ld\n", new_id); 
                 return; 
             }
         }
         
-        if (tc->cols[i].type == COL_UK && strlen(val) > 0) {
+        if (tc->cols[i].type == COL_UK && strlen(normalized_val) > 0) {
             for (int r = 0; r < tc->record_count; r++) {
                 char row_buf[1024]; 
                 char *f[MAX_COLS] = {0}; 
                 parse_csv_row(tc->records[r], f, row_buf);
                 
-                if (compare_value(f[i], val)) { 
-                    printf("[실패] INSERT 거부: '%s' 중복 (UK 제약).\n", val); 
+                if (compare_value(f[i], normalized_val)) { 
+                    printf("[실패] INSERT 거부: '%s' 중복 (UK 제약).\n", normalized_val); 
                     return; 
                 }
             }
@@ -577,7 +574,20 @@ void execute_insert(Statement *stmt) {
     
     for (int i = 0; i < tc->col_count; i++) {
         const char *v = (i < val_count && vals[i]) ? vals[i] : ((tc->cols[i].type == COL_NN) ? "" : "NULL");
-        
+        char normalized_storage_val[1024];
+        char formatted_val[1024];
+
+        strncpy(normalized_storage_val, v, sizeof(normalized_storage_val) - 1);
+        normalized_storage_val[sizeof(normalized_storage_val) - 1] = '\0';
+        trim_and_unquote(normalized_storage_val);
+
+        if (strchr(normalized_storage_val, ',')) {
+            snprintf(formatted_val, sizeof(formatted_val), "'%s'", normalized_storage_val);
+            v = formatted_val;
+        } else {
+            v = normalized_storage_val;
+        }
+
         int w = snprintf(new_line + offset, sizeof(new_line) - offset, "%s%s", v, (i < tc->col_count - 1) ? "," : "");
         if (w < 0 || (size_t)w >= sizeof(new_line) - offset) break; 
         
