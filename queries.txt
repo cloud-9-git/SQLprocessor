@@ -1,0 +1,5 @@
+INSERT INTO users VALUES (1, Hong_Gildong, 25);
+INSERT INTO users VALUES (2, Kim_Chulsoo, 30);
+SELECT * FROM users;
+INSERT INTO products VALUES (101, Laptop, 1500);
+SELECT * FROM products;
