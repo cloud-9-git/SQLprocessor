@@ -76,18 +76,6 @@ flowchart LR
 
 발표에서는 `정상 흐름 + 제약 검증`만 시연해도 핵심이 충분히 전달됩니다.
 
-## 실행 방법
-
-```bash
-gcc -fdiagnostics-color=always -g main.c lexer.c parser.c executor.c -o sqlproc_demo
-
-./sqlproc_demo case_basic_users_reset.txt
-./sqlproc_demo case_basic_users_run.txt
-
-./sqlproc_demo case_constraints_users_reset.txt
-./sqlproc_demo case_constraints_users_run.txt
-```
-
 ## 실제 시연에서 보여줄 결과
 
 | 테스트 | 기대 결과 |
