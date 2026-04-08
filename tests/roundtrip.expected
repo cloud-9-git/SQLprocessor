@@ -1,0 +1,23 @@
+INSERT 1 demo.users
+INSERT 1 demo.users
+INSERT 1 demo.users
+RESULT demo.users
+id | name | team
+1 | Kim | platform
+2 | Lee | data
+3 | Park | infra
+(3 rows)
+RESULT demo.users
+name | team
+Kim | platform
+Lee | data
+Park | infra
+(3 rows)
+RESULT demo.users
+name
+Lee
+(1 rows)
+RESULT demo.users
+id | name
+3 | Park
+(1 rows)

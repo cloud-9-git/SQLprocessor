@@ -1,1 +1,4 @@
-
+sql_processor
+tests/tmp-db/
+tests/demo-db/
+data/*/*.table
