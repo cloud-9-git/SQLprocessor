@@ -1,15 +1,18 @@
 {
     "tasks": [
-        {
+    {
             "type": "cppbuild",
-            "label": "C/C++: gcc build active file",
+            "label": "C/C++: gcc build SQLprocessor",
             "command": "/usr/bin/gcc",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${fileDirname}/main.c",
+                "${fileDirname}/lexer.c",
+                "${fileDirname}/parser.c",
+                "${fileDirname}/executor.c",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/sqlsprocessor"
             ],
             "options": {
                 "cwd": "${fileDirname}"

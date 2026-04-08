@@ -68,6 +68,8 @@ id(PK),email(UK),phone(UK),pwd(NN),name
 ## 6) 테스트 권장 순서
 
 ```bash
+gcc -fdiagnostics-color=always -g main.c lexer.c parser.c executor.c -o sqlsprocessor
+
 ./sqlsprocessor case_basic_users_reset.txt
 ./sqlsprocessor case_basic_users_run.txt
 

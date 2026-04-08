@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -6,7 +6,7 @@
 #include "parser.h"
 #include "executor.h"
 
-// SQL 파일을 한 줄씩 읽어 ';' 단위로 SQL 문장을 분리해 실행합니다.
+/* SQL ?뚯씪????以꾩뵫 ?쎌뼱 ';' ?⑥쐞濡?SQL 臾몄옣??遺꾨━???ㅽ뻾?⑸땲?? */
 int main(int argc, char *argv[]) {
     char filename[256];
 
@@ -14,13 +14,13 @@ int main(int argc, char *argv[]) {
         strncpy(filename, argv[1], 255);
         filename[255] = '\0';
     } else {
-        printf("SQL 파일 경로: ");
+        printf("SQL ?뚯씪 寃쎈줈: ");
         if (scanf("%255s", filename) != 1) return 1;
     }
 
     FILE *f = fopen(filename, "r");
     if (!f) {
-        printf("[에러] '%s' 파일을 열 수 없습니다.\n", filename);
+        printf("[?먮윭] '%s' ?뚯씪???????놁뒿?덈떎.\n", filename);
         return 1;
     }
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
                     else if (stmt.type == STMT_DELETE) execute_delete(&stmt);
                     else if (stmt.type == STMT_UPDATE) execute_update(&stmt);
                 } else {
-                    printf("[안내] 유효하지 않은 SQL 문입니다. %s\n", s);
+                    printf("[?덈궡] ?좏슚?섏? ?딆? SQL 臾몄엯?덈떎. %s\n", s);
                 }
             }
             idx = 0;

@@ -1,4 +1,4 @@
-#ifndef TYPES_H
+﻿#ifndef TYPES_H
 #define TYPES_H
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #define MAX_UKS 5
 #define MAX_SQL_LEN 4096
 
-// SQL 문장이 어떤 종류인지 구분하는 타입입니다.
+/* sample */
 typedef enum {
     STMT_INSERT,
     STMT_SELECT,
@@ -18,7 +18,7 @@ typedef enum {
     STMT_UNRECOGNIZED
 } StatementType;
 
-// 컬럼의 제약 조건을 나타내는 타입입니다. (일반 / PK / UK / NN)
+/* 而щ읆???쒖빟 議곌굔???섑??대뒗 ??낆엯?덈떎. (?쇰컲 / PK / UK / NN) */
 typedef enum {
     COL_NORMAL,
     COL_PK,
@@ -26,59 +26,61 @@ typedef enum {
     COL_NN
 } ColumnType;
 
-// 파서가 한 개의 SQL 문장을 해석한 결과를 담습니다.
-// 예: SELECT의 대상 테이블명, WHERE 조건, UPDATE의 set 정보 등을 여기 하나로 전달합니다.
+/* ?뚯꽌媛 ??媛쒖쓽 SQL 臾몄옣???댁꽍??寃곌낵瑜??댁뒿?덈떎. */
+/* ?? SELECT??????뚯씠釉붾챸, WHERE 議곌굔, UPDATE??set ?뺣낫 ?깆쓣 ?ш린 ?섎굹濡??꾨떖?⑸땲?? */
 typedef struct {
-    // 문장 종류: SELECT/INSERT/UPDATE/DELETE.
+    /* 臾몄옣 醫낅쪟: SELECT/INSERT/UPDATE/DELETE. */
     StatementType type;
-    // 대상 테이블 이름.
+    /* ????뚯씠釉??대쫫. */
     char table_name[256];
-    // INSERT VALUES(...) 내부의 원본 문자열.
+    /* INSERT VALUES(...) ?대????먮낯 臾몄옄?? */
     char row_data[1024];
-    // UPDATE ... SET 에서 바꿀 컬럼명.
+    /* UPDATE ... SET ?먯꽌 諛붽? 而щ읆紐? */
     char set_col[50];
-    // UPDATE ... SET 값.
+    /* UPDATE ... SET 媛? */
     char set_val[256];
-    // WHERE 절의 비교 대상 컬럼.
+    /* WHERE ?덉쓽 鍮꾧탳 ???而щ읆. */
     char where_col[50];
-    // WHERE 절 비교 값.
+    /* WHERE ??鍮꾧탳 媛? */
     char where_val[256];
 } Statement;
 
 typedef struct {
-    // 컬럼 이름.
+    /* 而щ읆 ?대쫫. */
     char name[50];
-    // 컬럼 제약 타입(PK, UK, NN 등).
+    /* 而щ읆 ?쒖빟 ???PK, UK, NN ??. */
     ColumnType type;
 } ColumnInfo;
 
-// 테이블 캐시입니다.
-// 파일에서 읽은 헤더/레코드를 메모리에 넣어 반복 사용해 SQL 처리를 빠르게 합니다.
+/* ?뚯씠釉?罹먯떆?낅땲?? */
+/* ?뚯씪?먯꽌 ?쎌? ?ㅻ뜑/?덉퐫?쒕? 硫붾え由ъ뿉 ?ｌ뼱 諛섎났 ?ъ슜??SQL 泥섎━瑜?鍮좊Ⅴ寃??⑸땲?? */
 typedef struct {
-    // 테이블 파일명(확장자 제외).
+    /* ?뚯씠釉??뚯씪紐??뺤옣???쒖쇅). */
     char table_name[256];
-    // 열려 있는 CSV 파일 포인터.
+    /* ?대젮 ?덈뒗 CSV ?뚯씪 ?ъ씤?? */
     FILE *file;
-    // 헤더에서 파싱한 컬럼 정보.
+    /* ?ㅻ뜑?먯꽌 ?뚯떛??而щ읆 ?뺣낫. */
     ColumnInfo cols[MAX_COLS];
-    // 헤더의 실제 컬럼 수.
+    /* ?ㅻ뜑???ㅼ젣 而щ읆 ?? */
     int col_count;
-    // PK 컬럼 인덱스(없으면 -1).
+    /* PK 而щ읆 ?몃뜳???놁쑝硫?-1). */
     int pk_idx;
-    // UK 컬럼 인덱스 목록.
+    /* UK 而щ읆 ?몃뜳??紐⑸줉. */
     int uk_indices[MAX_UKS];
-    // UK 컬럼 개수.
+    /* UK 而щ읆 媛쒖닔. */
     int uk_count;
-    // PK 정렬/중복 검사용 인덱스 배열.
+    /* PK ?뺣젹/以묐났 寃?ъ슜 ?몃뜳??諛곗뿴. */
     long pk_index[MAX_RECORDS];
-    // CSV 레코드 문자열 캐시.
+    /* CSV ?덉퐫??臾몄옄??罹먯떆. */
     char records[MAX_RECORDS][1024];
-    // 현재 캐시에 로드된 레코드 수.
+    /* ?꾩옱 罹먯떆??濡쒕뱶???덉퐫???? */
     int record_count;
+    /* LRU 援먯껜??理쒓렐 ?묎렐 ?쒕쾲. */
+    unsigned long long last_used_seq;
 } TableCache;
 
-// 어휘 분석기가 만든 토큰 종류입니다.
-// SQL 파싱 시 한 글자/단어를 문법 단위로 나눕니다.
+/* ?댄쐶 遺꾩꽍湲곌? 留뚮뱺 ?좏겙 醫낅쪟?낅땲?? */
+/* SQL ?뚯떛 ????湲???⑥뼱瑜?臾몃쾿 ?⑥쐞濡??섎닏?덈떎. */
 typedef enum {
     TOKEN_EOF,
     TOKEN_ILLEGAL,
@@ -102,29 +104,29 @@ typedef enum {
     TOKEN_SEMICOLON
 } TokenType;
 
-// 토큰 하나를 표현하는 구조체입니다.
-// type(종류)과 text(실제 문자열)을 함께 보관합니다.
+/* ?좏겙 ?섎굹瑜??쒗쁽?섎뒗 援ъ“泥댁엯?덈떎. */
+/* type(醫낅쪟)怨?text(?ㅼ젣 臾몄옄?????④퍡 蹂닿??⑸땲?? */
 typedef struct {
-    // 토큰 종류.
+    /* ?좏겙 醫낅쪟. */
     TokenType type;
-    // 토큰의 실제 텍스트.
+    /* ?좏겙???ㅼ젣 ?띿뒪?? */
     char text[256];
 } Token;
 
-// 현재 SQL 문자열에서 어디까지 읽었는지 관리합니다.
+/* ?꾩옱 SQL 臾몄옄?댁뿉???대뵒源뚯? ?쎌뿀?붿? 愿由ы빀?덈떎. */
 typedef struct {
-    // 파싱할 SQL 문자열.
+    /* ?뚯떛??SQL 臾몄옄?? */
     const char *sql;
-    // 현재 읽는 위치.
+    /* ?꾩옱 ?쎈뒗 ?꾩튂. */
     int pos;
 } Lexer;
 
-// 파서 동작 상태입니다.
-// Lexer 상태 + 현재 토큰을 묶어 한 문장 파싱에 사용합니다.
+/* ?뚯꽌 ?숈옉 ?곹깭?낅땲?? */
+/* Lexer ?곹깭 + ?꾩옱 ?좏겙??臾띠뼱 ??臾몄옣 ?뚯떛???ъ슜?⑸땲?? */
 typedef struct {
-    // 현재 사용 중인 lexer 상태.
+    /* ?꾩옱 ?ъ슜 以묒씤 lexer ?곹깭. */
     Lexer lexer;
-    // 현재 위치에서 읽은 토큰.
+    /* ?꾩옱 ?꾩튂?먯꽌 ?쎌? ?좏겙. */
     Token current_token;
 } Parser;
 

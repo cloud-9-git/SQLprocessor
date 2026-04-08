@@ -1,10 +1,10 @@
-#ifndef PARSER_H
+﻿#ifndef PARSER_H
 #define PARSER_H
 
 #include "types.h"
 
-// 하나의 SQL 문자열을 파싱해 Statement로 변환합니다.
-// 성공하면 true(1), 실패하면 false(0) 반환.
+/* ?섎굹??SQL 臾몄옄?댁쓣 ?뚯떛??Statement濡?蹂?섑빀?덈떎. */
+/* ?깃났?섎㈃ true(1), ?ㅽ뙣?섎㈃ false(0) 諛섑솚. */
 int parse_statement(const char *sql, Statement *stmt);
 
 #endif
