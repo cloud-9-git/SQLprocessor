@@ -125,6 +125,26 @@
             }
         },
         {
+            "label": "Run Demo Edge Case",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "demo-edge-case"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "Build SQLprocessor"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        },
+        {
             "label": "Run Demo Update",
             "type": "shell",
             "command": "make",

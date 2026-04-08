@@ -4,7 +4,7 @@ TARGET ?= sqlsprocessor
 SRC = main.c
 SQL ?= demo_select.sql
 
-.PHONY: all build run demo-reset demo-select demo-insert demo-insert-error demo-update demo-delete clean
+.PHONY: all build run demo-reset demo-select demo-insert demo-insert-error demo-edge-case demo-update demo-delete clean
 
 all: build
 
@@ -27,6 +27,9 @@ demo-insert: $(TARGET)
 
 demo-insert-error: $(TARGET)
 	./$(TARGET) demo_insert_error.sql
+
+demo-edge-case: $(TARGET)
+	./$(TARGET) demo_edge_case.sql
 
 demo-update: $(TARGET)
 	./$(TARGET) demo_update.sql

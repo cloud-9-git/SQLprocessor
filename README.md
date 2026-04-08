@@ -47,3 +47,26 @@ flowchart LR
 - `'tony,stark@test.com'`처럼 쉼표가 들어간 quoted 값도 처리합니다.
 - 잘못된 SQL 문장과 제약 위반을 콘솔 메시지로 바로 확인할 수 있습니다.
 
+## 시연 순서
+
+```bash
+gcc -fdiagnostics-color=always -g main.c -o sqlsprocessor
+
+./sqlsprocessor demo_reset.sql
+./sqlsprocessor demo_select.sql
+./sqlsprocessor demo_insert.sql
+./sqlsprocessor demo_insert_error.sql
+./sqlsprocessor demo_edge_case.sql
+./sqlsprocessor demo_update.sql
+./sqlsprocessor demo_delete.sql
+```
+
+| 데모 파일 | 보여주는 내용 |
+| --- | --- |
+| `demo_reset.sql` | 기준 상태 복원 |
+| `demo_select.sql` | 전체 조회 + 조건 조회 |
+| `demo_insert.sql` | 정상 INSERT |
+| `demo_insert_error.sql` | PK / UK 중복 에러 |
+| `demo_edge_case.sql` | 조회 결과 없음, quoted 값, 예외 상황 묶음 |
+| `demo_update.sql` | 조건 기반 수정 |
+| `demo_delete.sql` | 조건 기반 삭제 |
