@@ -1,130 +1,154 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
-// 1. SQL 명령어 종류를 구분하기 위한 열거형
-typedef enum { 
-    STMT_INSERT, 
-    STMT_SELECT, 
-    STMT_UNRECOGNIZED 
-} StatementType;
+// =================================================================
+// 1. 자료구조 정의
+// =================================================================
+typedef enum { STMT_INSERT, STMT_SELECT, STMT_UNRECOGNIZED } StatementType;
 
-// 2. 파싱된 SQL 데이터를 담는 구조체
 typedef struct {
     StatementType type;
     char table_name[256];
-    char row_data[1024]; // INSERT할 때 사용할 데이터
+    char row_data[1024];
 } Statement;
 
-// [추가할 함수 1] 파일이 없으면 새로 만들고 스키마(헤더)를 작성하는 함수
-void create_table_if_not_exists(const char* table_name, const char* schema_header) {
-    char filename[300];
-    sprintf(filename, "%s.csv", table_name);
+// [개선1] 파일 포인터 캐싱 (File Handle Caching)을 위한 구조체
+typedef struct {
+    char table_name[256];
+    FILE *file;
+} TableCache;
 
-    // "r" 모드로 열기를 시도해서 파일이 이미 존재하는지 확인합니다.
-    FILE *file = fopen(filename, "r");
-    
-    if (file == NULL) {
-        // 파일이 없다면 "w"(쓰기) 모드로 새로 생성합니다.
-        file = fopen(filename, "w");
-        if (file != NULL) {
-            // 첫 줄에 스키마(컬럼명)를 적어줍니다.
-            fprintf(file, "%s\n", schema_header);
-            fclose(file);
-            printf("[시스템] '%s' 테이블이 없어 새로 생성했습니다. (스키마: %s)\n", filename, schema_header);
+TableCache open_tables[100];
+int open_table_count = 0;
+
+// =================================================================
+// 2. 유틸리티 및 DB 엔진 함수
+// =================================================================
+
+// 대문자 변환 함수 (대소문자 구분 없는 파싱을 위함)
+void string_to_upper(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = toupper((unsigned char)str[i]);
+    }
+}
+
+// [개선1, 2] 테이블 파일을 캐시에서 찾거나, 존재할 때만 새로 엽니다.
+FILE* get_table_file(const char* table_name) {
+    for (int i = 0; i < open_table_count; i++) {
+        if (strcmp(open_tables[i].table_name, table_name) == 0) {
+            return open_tables[i].file;
         }
-    } else {
-        // 파일이 이미 존재하면 그냥 닫습니다. (기존 데이터 유지)
-        fclose(file);
+    }
+
+    // [개선3] 버퍼 오버플로우 방지
+    char filename[300];
+    snprintf(filename, sizeof(filename), "%s.csv", table_name);
+
+    // "r+" : 읽기/쓰기 모드. 파일이 없으면 생성하지 않고 NULL 반환. (암묵적 CREATE TABLE 방지)
+    FILE *file = fopen(filename, "r+");
+    if (file == NULL) {
+        printf("[오류] '%s' 테이블이 존재하지 않습니다. (파일 없음)\n", filename);
+        return NULL;
+    }
+
+    // 캐시에 등록
+    if (open_table_count < 100) {
+        strcpy(open_tables[open_table_count].table_name, table_name);
+        open_tables[open_table_count].file = file;
+        open_table_count++;
+    }
+
+    return file;
+}
+
+// 프로그램 종료 시 열려있는 모든 캐시 파일을 닫습니다.
+void close_all_tables() {
+    for (int i = 0; i < open_table_count; i++) {
+        fclose(open_tables[i].file);
     }
 }
 
-// [추가할 함수 2] 프로그램 시작 시 데이터베이스(테이블들)를 준비하는 함수
-void init_database() {
-    printf("--- 데이터베이스 초기화 중 ---\n");
-    // 사용할 테이블과 스키마 구조를 미리 정의해 둡니다.
-    create_table_if_not_exists("users", "id,name,age");
-    create_table_if_not_exists("products", "id,product_name,price");
-    printf("--- 데이터베이스 준비 완료 ---\n\n");
-}
-
-
-
 // =================================================================
-// [함수 1] SQL 문장 분석 (Parser)
+// 3. 파서 (Parser) - [개선3, 4] 엄격한 검증 및 버퍼 오버플로우 방지
 // =================================================================
-int parse_statement(char *sql, Statement *stmt) {
-    char command[20];
-    
-    // 첫 번째 단어(명령어)만 먼저 읽어옵니다.
-    sscanf(sql, "%s", command);
+int parse_statement(const char *sql, Statement *stmt) {
+    char cmd1[20], cmd2[20], cmd3[20];
+    char garbage[256];
 
-    if (strcmp(command, "INSERT") == 0) {
-        stmt->type = STMT_INSERT;
-        // 형식: INSERT INTO 테이블명 VALUES (데이터)
-        // %s 로 테이블명을 받고, %[^)] 로 ')'가 나올 때까지의 모든 문자열을 row_data에 저장합니다.
-        sscanf(sql, "INSERT INTO %s VALUES (%[^)])", stmt->table_name, stmt->row_data);
-        return 1; // 파싱 성공
+    // 원본 문자열 보호를 위한 복사본 생성
+    char sql_copy[4096];
+    strncpy(sql_copy, sql, sizeof(sql_copy) - 1);
+    sql_copy[sizeof(sql_copy) - 1] = '\0';
+
+    if (sscanf(sql_copy, "%19s", cmd1) != 1) return 0;
+    string_to_upper(cmd1);
+
+    if (strcmp(cmd1, "INSERT") == 0) {
+        // [개선3, 5] 길이 제한 설정, schema.table 파싱 가능토록 %255s 사용
+        // [개선4] garbage 변수를 두어 WHERE 같은 지원하지 않는 찌꺼기 명령어를 감지
+        int matched = sscanf(sql_copy, "%19s %19s %255s %19s ( %1023[^)] ) %255s",
+                             cmd1, cmd2, stmt->table_name, cmd3, stmt->row_data, garbage);
+
+        string_to_upper(cmd2);
+        string_to_upper(cmd3);
+
+        // 정확히 5개 요소가 매칭되어야 정상 문법 (garbage가 매칭되면 matched=6이 되어 실패)
+        if (matched == 5 && strcmp(cmd2, "INTO") == 0 && strcmp(cmd3, "VALUES") == 0) {
+            stmt->type = STMT_INSERT;
+            return 1;
+        }
     } 
-    else if (strcmp(command, "SELECT") == 0) {
-        stmt->type = STMT_SELECT;
-        // 형식: SELECT * FROM 테이블명
-        sscanf(sql, "SELECT * FROM %s", stmt->table_name);
-        return 1; // 파싱 성공
+    else if (strcmp(cmd1, "SELECT") == 0) {
+        int matched = sscanf(sql_copy, "%19s %19s %19s %255s %255s",
+                             cmd1, cmd2, cmd3, stmt->table_name, garbage);
+
+        string_to_upper(cmd3);
+
+        // 정확히 4개 요소가 매칭되어야 정상 (matched=5면 실패)
+        if (matched == 4 && strcmp(cmd2, "*") == 0 && strcmp(cmd3, "FROM") == 0) {
+            stmt->type = STMT_SELECT;
+            return 1;
+        }
     }
 
-    return 0; // 알 수 없는 명령어 (파싱 실패)
+    return 0; // 문법 오류 또는 미지원 쿼리
 }
 
 // =================================================================
-// [함수 2] INSERT 실행 (파일에 데이터 저장)
+// 4. 실행 엔진 (Execution)
 // =================================================================
 void execute_insert(Statement *stmt) {
-    char filename[300];
-    sprintf(filename, "%s.csv", stmt->table_name); // 예: users.csv
+    FILE *file = get_table_file(stmt->table_name);
+    if (file == NULL) return; // 파일(테이블)이 없으면 중단
 
-    // "a" 모드 (Append): 파일이 없으면 새로 만들고, 있으면 맨 끝에 내용을 추가합니다.
-    FILE *file = fopen(filename, "a");
-    if (file == NULL) {
-        printf("[오류] %s 테이블 파일을 열 수 없습니다.\n", filename);
-        return;
-    }
-
-    // 파일에 데이터 쓰고 줄바꿈
+    // [개선1] 데이터를 추가하기 위해 파일 포인터를 맨 끝으로 이동
+    fseek(file, 0, SEEK_END);
     fprintf(file, "%s\n", stmt->row_data);
-    fclose(file);
+    fflush(file); // 메모리 버퍼를 디스크에 강제 기록
     
-    printf("[성공] %s 테이블에 데이터를 저장했습니다. (%s)\n", stmt->table_name, stmt->row_data);
+    printf("[성공] '%s' 테이블에 데이터 추가 완료\n", stmt->table_name);
 }
 
-// =================================================================
-// [함수 3] SELECT 실행 (파일에서 데이터 읽어오기)
-// =================================================================
 void execute_select(Statement *stmt) {
-    char filename[300];
-    sprintf(filename, "%s.csv", stmt->table_name); 
+    FILE *file = get_table_file(stmt->table_name);
+    if (file == NULL) return;
 
-    // "r" 모드 (Read): 읽기 전용으로 파일을 엽니다.
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("[알림] %s 테이블에 데이터가 없습니다. (파일 없음)\n", filename);
-        return;
-    }
+    // [개선1] 데이터를 처음부터 읽기 위해 파일 포인터를 맨 앞으로 이동
+    fseek(file, 0, SEEK_SET);
 
-    printf("=== [%s] 테이블 조회 결과 ===\n", stmt->table_name);
+    printf("\n=== [%s] 조회 결과 ===\n", stmt->table_name);
     char line[1024];
-    // 파일의 끝(EOF)에 도달할 때까지 한 줄씩 읽어서 출력합니다.
     while (fgets(line, sizeof(line), file) != NULL) {
-        printf("- %s", line);
+        printf("%s", line);
     }
-    printf("===============================\n");
+    printf("======================\n");
 
-    fclose(file);
+    // 다음 읽기/쓰기를 위해 EOF(End of File) 상태 플래그 초기화
+    clearerr(file);
 }
 
-// =================================================================
-// [함수 4] 실행 매니저
-// =================================================================
 void execute_statement(Statement *stmt) {
     if (stmt->type == STMT_INSERT) {
         execute_insert(stmt);
@@ -134,63 +158,67 @@ void execute_statement(Statement *stmt) {
 }
 
 // =================================================================
-// [메인 함수] 커맨드 라인 입력 및 전체 흐름 제어
-// =================================================================
-// =================================================================
-// [메인 함수] scanf로 파일명 입력받기
-// =================================================================
-// =================================================================
-// [메인 함수] 커맨드 라인 인자 우선 처리, 없으면 scanf로 입력받기
+// 5. 메인 로직 - [개선6] 글자 단위 스트림 처리 (Multi-line, 따옴표 무시)
 // =================================================================
 int main(int argc, char *argv[]) {
     char filename[256];
 
-    // 1. 데이터베이스 스키마 및 테이블 준비
-    init_database(); 
-
-    // 2. 실행 시 파일명을 인자로 주었는지 확인
     if (argc >= 2) {
-        // 인자값이 있는 경우 (예: ./sql_processor queries.txt)
-        // argv[1]에 있는 파일 이름을 filename 배열로 복사합니다.
-        strcpy(filename, argv[1]); 
+        strncpy(filename, argv[1], sizeof(filename)-1);
     } else {
-        // 인자값이 없는 경우 (예: ./sql_processor 만 입력한 경우)
-        printf("실행할 SQL 파일 이름을 입력하세요 (예: queries.txt): ");
-        scanf("%s", filename);
+        printf("실행할 SQL 파일 이름을 입력하세요: ");
+        scanf("%255s", filename);
     }
 
-    // 3. 결정된 파일 이름으로 파일 열기
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("[오류] '%s' 파일을 찾을 수 없습니다. 파일 이름과 확장자를 확인해 주세요.\n", filename);
+    FILE *sql_file = fopen(filename, "r");
+    if (sql_file == NULL) {
+        printf("[오류] '%s' 파일을 열 수 없습니다.\n", filename);
         return 1;
     }
 
-    char line[1024];
-    Statement stmt;
+    char sql_buffer[4096];
+    int buf_idx = 0;
+    int in_quotes = 0;
+    int ch;
 
-    printf("\n--- [%s] 파일 읽기 시작 ---\n", filename);
+    // 파일에서 문자 하나씩(char by char) 읽어오기
+    while ((ch = fgetc(sql_file)) != EOF) {
+        // [개선3] 한 문장이 버퍼 크기를 넘어가면 오버플로우 방지를 위해 스킵
+        if (buf_idx >= sizeof(sql_buffer) - 1) {
+            printf("[오류] SQL 문장이 너무 깁니다. 해당 문장 파싱을 건너뜁니다.\n");
+            while ((ch = fgetc(sql_file)) != EOF && ch != ';') { /* 세미콜론까지 건너뛰기 */ }
+            buf_idx = 0;
+            in_quotes = 0;
+            continue;
+        }
 
-    // 4. 파일에서 한 줄씩 읽어오기
-    while (fgets(line, sizeof(line), file) != NULL) {
-        
-        // 줄바꿈과 세미콜론 제거
-        line[strcspn(line, ";\n")] = '\0';
+        if (ch == '\'') {
+            in_quotes = !in_quotes; // 문자열 내부 상태 토글
+        }
 
-        // 빈 줄이면 건너뛰기
-        if (strlen(line) == 0) continue;
+        // 따옴표 바깥에 있는 세미콜론(;)을 만났을 때만 문장의 끝으로 간주
+        if (ch == ';' && !in_quotes) {
+            sql_buffer[buf_idx] = '\0'; // 문자열 완성
+            
+            // 앞부분 공백(엔터, 탭, 띄어쓰기 등) 무시
+            char *start = sql_buffer;
+            while (isspace(*start)) start++;
 
-        printf("\n[실행 중인 SQL] %s;\n", line);
-
-        // 파싱 및 실행
-        if (parse_statement(line, &stmt) == 1) {
-            execute_statement(&stmt);
+            if (strlen(start) > 0) {
+                Statement stmt;
+                if (parse_statement(start, &stmt) == 1) {
+                    execute_statement(&stmt);
+                } else {
+                    printf("\n[에러] 문법 오류 또는 미지원 쿼리: %s;\n", start);
+                }
+            }
+            buf_idx = 0; // 다음 문장을 담기 위해 버퍼 초기화
         } else {
-            printf("[오류] 지원하지 않거나 잘못된 SQL 문법입니다.\n");
+            sql_buffer[buf_idx++] = (char)ch;
         }
     }
 
-    // 5. 파일 닫기
-    fclose(file);
+    fclose(sql_file);
+    close_all_tables(); // 프로그램 종료 시 열려있는 모든 테이블 안전하게 닫기
     return 0;
 }
