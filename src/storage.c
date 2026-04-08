@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* data/<table>.rows 파일 경로를 조합합니다. */
 static SqlStatus make_data_path(const char *db_root, const char *table_name, char *buffer, size_t buffer_size, SqlError *err) {
     if (snprintf(buffer, buffer_size, "%s/data/%s.rows", db_root, table_name) >= (int)buffer_size) {
         sql_error_set(err, 0, 0, 0, "data path is too long");
@@ -13,6 +14,7 @@ static SqlStatus make_data_path(const char *db_root, const char *table_name, cha
     return SQL_STATUS_OK;
 }
 
+/* 이스케이프 문자열을 만들 때 동적 버퍼 뒤에 문자 하나를 추가합니다. */
 static SqlStatus append_text(char **buffer, size_t *length, size_t *capacity, char ch, SqlError *err) {
     char *grown;
 
@@ -31,6 +33,7 @@ static SqlStatus append_text(char **buffer, size_t *length, size_t *capacity, ch
     return SQL_STATUS_OK;
 }
 
+/* TEXT 값을 row 파일에 안전하게 저장할 수 있도록 escape합니다. */
 static SqlStatus escape_field(const char *plain_text, char **out_text, SqlError *err) {
     size_t capacity = strlen(plain_text) * 2U + 8U;
     size_t length = 0U;
@@ -44,6 +47,7 @@ static SqlStatus escape_field(const char *plain_text, char **out_text, SqlError 
     }
     buffer[0] = '\0';
 
+    /* ⭐ row 파일은 escaped TSV 형식이므로 탭, 줄바꿈, 역슬래시를 반드시 escape합니다. */
     for (index = 0U; plain_text[index] != '\0'; index++) {
         char ch = plain_text[index];
         if (ch == '\\') {
@@ -81,6 +85,7 @@ static SqlStatus escape_field(const char *plain_text, char **out_text, SqlError 
     return SQL_STATUS_OK;
 }
 
+/* row 파일에서 읽은 escaped 문자열을 다시 평문으로 복원합니다. */
 static SqlStatus unescape_field(const char *escaped_text, char **out_text, SqlError *err) {
     size_t capacity = strlen(escaped_text) + 1U;
     size_t length = 0U;
@@ -119,6 +124,7 @@ static SqlStatus unescape_field(const char *escaped_text, char **out_text, SqlEr
     return SQL_STATUS_OK;
 }
 
+/* 저장 파일의 문자열 필드를 schema 타입에 맞는 Value로 해석합니다. */
 static SqlStatus parse_value_from_text(DataType type, const char *text, Value *out_value, SqlError *err) {
     char *end_ptr = NULL;
 
@@ -151,6 +157,7 @@ static SqlStatus parse_value_from_text(DataType type, const char *text, Value *o
     return SQL_STATUS_ERROR;
 }
 
+/* 🧭 executor가 넘긴 row를 실제 row 파일 끝에 추가합니다. */
 SqlStatus storage_append_row(const char *db_root, const TableSchema *schema, const Row *row, SqlError *err) {
     char path[1024];
     FILE *file;
@@ -178,6 +185,9 @@ SqlStatus storage_append_row(const char *db_root, const TableSchema *schema, con
         return SQL_STATUS_IO;
     }
 
+    /* ⚠️ storage는 schema 순서의 row만 기록합니다.
+     * 입력 순서를 schema 순서로 맞추는 책임은 binder에 있습니다.
+     */
     for (index = 0U; index < row->value_count; index++) {
         char *plain = NULL;
         char *escaped = NULL;
@@ -211,6 +221,7 @@ SqlStatus storage_append_row(const char *db_root, const TableSchema *schema, con
     return SQL_STATUS_OK;
 }
 
+/* 🧭 row 파일을 처음부터 끝까지 읽어 typed Row로 복원한 뒤 콜백에 넘깁니다. */
 SqlStatus storage_scan_rows(const char *db_root, const TableSchema *schema, RowVisitor visit, void *ctx, SqlError *err) {
     char path[1024];
     FILE *file;
@@ -238,6 +249,9 @@ SqlStatus storage_scan_rows(const char *db_root, const TableSchema *schema, RowV
         return SQL_STATUS_IO;
     }
 
+    /* ⭐ executor는 파일 포맷을 몰라도 되도록,
+     * storage 단계에서 raw text를 typed Row로 완전히 복원합니다.
+     */
     while ((line_length = getline(&line, &line_capacity, file)) >= 0) {
         size_t field_index = 0U;
         size_t start = 0U;

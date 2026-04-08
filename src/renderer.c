@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* trace 트리를 보기 좋게 들여쓰기할 때 쓰는 헬퍼입니다. */
 static void print_indent(FILE *stream, int depth) {
     for (int index = 0; index < depth; index++) {
         fputs("  ", stream);
     }
 }
 
+/* plan tree를 재귀적으로 순회하며 사람이 읽기 쉬운 형태로 출력합니다. */
 static void print_plan_node(FILE *stream, const PlanNode *node, int depth) {
     if (node == NULL) {
         return;
@@ -29,6 +31,7 @@ static void print_plan_node(FILE *stream, const PlanNode *node, int depth) {
     print_plan_node(stream, node->child, depth + 1);
 }
 
+/* SELECT 결과셋을 TSV 형식으로 stdout 등에 출력합니다. */
 SqlStatus renderer_print_results(FILE *stream, const ExecutionOutput *output, SqlError *err) {
     size_t result_index;
 
@@ -76,6 +79,7 @@ SqlStatus renderer_print_results(FILE *stream, const ExecutionOutput *output, Sq
     return SQL_STATUS_OK;
 }
 
+/* 저장된 SqlError를 사용자용 한 줄 메시지로 출력합니다. */
 void renderer_print_error(FILE *stream, const SqlError *err) {
     if (stream == NULL || err == NULL) {
         return;
@@ -89,6 +93,7 @@ void renderer_print_error(FILE *stream, const SqlError *err) {
             err->message);
 }
 
+/* planner가 만든 PlanScript를 trace 용도로 출력합니다. */
 void renderer_print_trace(FILE *stream, const PlanScript *plan) {
     if (stream == NULL || plan == NULL) {
         return;
@@ -106,6 +111,7 @@ void renderer_print_trace(FILE *stream, const PlanScript *plan) {
     }
 }
 
+/* --check 성공 시 간단한 검증 완료 메시지를 출력합니다. */
 void renderer_print_check_ok(FILE *stream, size_t statement_count) {
     if (stream == NULL) {
         return;

@@ -5,12 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* parser가 현재 바라보는 토큰 위치와 statement 번호를 추적합니다. */
 typedef struct {
     TokenArray tokens;
     size_t current;
     size_t statement_index;
 } ParserState;
 
+/* AST 노드에 저장할 문자열을 새 메모리로 복사합니다. */
 static char *dup_string(const char *text, SqlError *err) {
     size_t length;
     char *copy;
@@ -26,18 +28,22 @@ static char *dup_string(const char *text, SqlError *err) {
     return copy;
 }
 
+/* 현재 읽고 있는 토큰을 반환합니다. */
 static Token *peek(ParserState *parser) {
     return &parser->tokens.items[parser->current];
 }
 
+/* 직전에 소비한 토큰을 반환합니다. */
 static Token *previous(ParserState *parser) {
     return &parser->tokens.items[parser->current - 1U];
 }
 
+/* 파일 끝 토큰에 도달했는지 확인합니다. */
 static int is_at_end(ParserState *parser) {
     return peek(parser)->type == TOKEN_EOF;
 }
 
+/* 토큰 하나를 소비하고 이전 토큰을 돌려줍니다. */
 static Token *advance(ParserState *parser) {
     if (!is_at_end(parser)) {
         parser->current++;
@@ -45,6 +51,7 @@ static Token *advance(ParserState *parser) {
     return previous(parser);
 }
 
+/* 현재 토큰이 원하는 타입이면 소비하고 성공을 반환합니다. */
 static int match(ParserState *parser, TokenType type) {
     if (peek(parser)->type != type) {
         return 0;
@@ -53,6 +60,7 @@ static int match(ParserState *parser, TokenType type) {
     return 1;
 }
 
+/* 현재 토큰이 기대한 타입인지 확인하고, 아니면 위치 정보가 포함된 오류를 만듭니다. */
 static Token *expect(ParserState *parser, TokenType type, SqlError *err, const char *message) {
     Token *token = peek(parser);
 
@@ -65,6 +73,7 @@ static Token *expect(ParserState *parser, TokenType type, SqlError *err, const c
     return advance(parser);
 }
 
+/* 새 AST 표현식 노드를 0으로 초기화해서 생성합니다. */
 static AstExpr *new_expr(AstExprKind kind, SqlError *err) {
     AstExpr *expr = (AstExpr *)calloc(1U, sizeof(AstExpr));
 
@@ -77,6 +86,7 @@ static AstExpr *new_expr(AstExprKind kind, SqlError *err) {
     return expr;
 }
 
+/* 표현식 트리를 재귀적으로 해제합니다. */
 static void ast_expr_free(AstExpr *expr) {
     if (expr == NULL) {
         return;
@@ -100,6 +110,7 @@ static void ast_expr_free(AstExpr *expr) {
     free(expr);
 }
 
+/* 숫자, 문자열, 불리언 토큰을 내부 Value로 바꿉니다. */
 static SqlStatus parse_literal(ParserState *parser, Value *out_value, SqlError *err) {
     Token *token = peek(parser);
     char *end_ptr = NULL;
@@ -138,6 +149,7 @@ static SqlStatus parse_literal(ParserState *parser, Value *out_value, SqlError *
     return SQL_STATUS_ERROR;
 }
 
+/* 표현식의 가장 작은 단위인 컬럼 참조 또는 리터럴을 읽습니다. */
 static AstExpr *parse_primary_expr(ParserState *parser, SqlError *err) {
     Token *token = peek(parser);
     AstExpr *expr;
@@ -173,6 +185,9 @@ static AstExpr *parse_primary_expr(ParserState *parser, SqlError *err) {
     return expr;
 }
 
+/* ⚠️ v1의 WHERE는 `column = literal` 한 가지 형태만 허용합니다.
+ * 그래도 내부 표현은 트리로 유지해서 이후 AND/OR 확장이 가능하게 둡니다.
+ */
 static AstExpr *parse_where_expr(ParserState *parser, SqlError *err) {
     AstExpr *left;
     AstExpr *right;
@@ -222,6 +237,7 @@ static AstExpr *parse_where_expr(ParserState *parser, SqlError *err) {
     return expr;
 }
 
+/* 동적 문자열 배열 끝에 새 문자열을 추가합니다. */
 static SqlStatus append_string(char ***items, size_t *count, const char *text, SqlError *err) {
     char **grown = (char **)realloc(*items, sizeof(char *) * (*count + 1U));
 
@@ -239,6 +255,7 @@ static SqlStatus append_string(char ***items, size_t *count, const char *text, S
     return SQL_STATUS_OK;
 }
 
+/* 동적 Value 배열 끝에 새 리터럴 값을 깊은 복사로 추가합니다. */
 static SqlStatus append_value(Value **items, size_t *count, const Value *value, SqlError *err) {
     Value *grown = (Value *)realloc(*items, sizeof(Value) * (*count + 1U));
     SqlStatus status;
@@ -257,6 +274,7 @@ static SqlStatus append_value(Value **items, size_t *count, const Value *value, 
     return SQL_STATUS_OK;
 }
 
+/* `a, b, c` 형태의 식별자 목록을 읽습니다. */
 static SqlStatus parse_identifier_list(ParserState *parser, char ***names, size_t *count, SqlError *err) {
     Token *token;
     SqlStatus status;
@@ -276,6 +294,7 @@ static SqlStatus parse_identifier_list(ParserState *parser, char ***names, size_
     return SQL_STATUS_OK;
 }
 
+/* `1, 'Alice', true` 형태의 리터럴 목록을 읽습니다. */
 static SqlStatus parse_value_list(ParserState *parser, Value **values, size_t *count, SqlError *err) {
     SqlStatus status;
 
@@ -298,6 +317,7 @@ static SqlStatus parse_value_list(ParserState *parser, Value **values, size_t *c
     return SQL_STATUS_OK;
 }
 
+/* INSERT 문장을 AST 구조체로 해석합니다. */
 static SqlStatus parse_insert(ParserState *parser, Statement *statement, SqlError *err) {
     Token *table_token;
     SqlStatus status;
@@ -320,6 +340,9 @@ static SqlStatus parse_insert(ParserState *parser, Statement *statement, SqlErro
         return SQL_STATUS_OOM;
     }
 
+    /* 컬럼 목록은 사용자가 입력한 순서를 그대로 AST에 담아둡니다.
+     * 실제 schema 순서 정렬은 binder 단계에서 수행합니다.
+     */
     if (match(parser, TOKEN_LPAREN)) {
         status = parse_identifier_list(parser,
                                        &statement->as.insert_stmt.column_names,
@@ -353,6 +376,7 @@ static SqlStatus parse_insert(ParserState *parser, Statement *statement, SqlErro
     return SQL_STATUS_OK;
 }
 
+/* SELECT 문장을 AST 구조체로 해석합니다. */
 static SqlStatus parse_select(ParserState *parser, Statement *statement, SqlError *err) {
     Token *table_token;
     SqlStatus status = SQL_STATUS_OK;
@@ -362,6 +386,9 @@ static SqlStatus parse_select(ParserState *parser, Statement *statement, SqlErro
     }
 
     statement->kind = STATEMENT_SELECT;
+    /* SELECT는 우선 문법 형태만 AST에 기록하고,
+     * 실제 컬럼 존재 여부 검사는 binder에 넘깁니다.
+     */
     if (match(parser, TOKEN_STAR)) {
         statement->as.select_stmt.select_all = 1;
     } else {
@@ -398,6 +425,7 @@ static SqlStatus parse_select(ParserState *parser, Statement *statement, SqlErro
     return SQL_STATUS_OK;
 }
 
+/* Statement 메모리를 해제하기 전에 안전한 기본값으로 초기화합니다. */
 static void statement_init(Statement *statement) {
     statement->kind = STATEMENT_INSERT;
     statement->line = 0;
@@ -409,6 +437,7 @@ static void statement_init(Statement *statement) {
     statement->as.insert_stmt.values = NULL;
 }
 
+/* Statement 안에 들어 있는 INSERT/SELECT 전용 메모리를 해제합니다. */
 static void statement_free(Statement *statement) {
     size_t index;
 
@@ -436,6 +465,7 @@ static void statement_free(Statement *statement) {
     }
 }
 
+/* AstScript 컨테이너를 비어 있는 상태로 초기화합니다. */
 void ast_script_init(AstScript *script) {
     if (script == NULL) {
         return;
@@ -445,6 +475,7 @@ void ast_script_init(AstScript *script) {
     script->statements = NULL;
 }
 
+/* AstScript 전체를 순회하며 statement와 표현식을 해제합니다. */
 void ast_script_free(AstScript *script) {
     size_t index;
 
@@ -460,6 +491,7 @@ void ast_script_free(AstScript *script) {
     script->statement_count = 0U;
 }
 
+/* 파싱이 끝난 statement를 AstScript 뒤에 추가합니다. */
 static SqlStatus append_statement(AstScript *script, const Statement *statement, SqlError *err) {
     Statement *grown = (Statement *)realloc(script->statements, sizeof(Statement) * (script->statement_count + 1U));
 
@@ -474,6 +506,9 @@ static SqlStatus append_statement(AstScript *script, const Statement *statement,
     return SQL_STATUS_OK;
 }
 
+/* 🧭 parser의 실제 진입점입니다.
+ * lexer 결과를 읽어 세미콜론으로 구분된 여러 statement를 AST로 바꿉니다.
+ */
 SqlStatus parser_parse_script(const char *sql, AstScript *out_script, SqlError *err) {
     ParserState parser;
     SqlStatus status;
@@ -492,6 +527,7 @@ SqlStatus parser_parse_script(const char *sql, AstScript *out_script, SqlError *
         return status;
     }
 
+    /* ⭐ 하나의 SQL 파일에 여러 문장이 들어올 수 있으므로 세미콜론 단위로 반복 파싱합니다. */
     while (!is_at_end(&parser)) {
         Statement statement;
         Token *start;

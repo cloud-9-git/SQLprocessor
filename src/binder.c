@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+/* catalog에서 읽은 스키마 오류에 statement 위치 정보를 덧붙입니다. */
 static SqlStatus clone_schema_from_catalog(const Catalog *catalog,
                                            const char *table_name,
                                            TableSchema *out_schema,
@@ -22,6 +23,7 @@ static SqlStatus clone_schema_from_catalog(const Catalog *catalog,
     return status;
 }
 
+/* 컬럼 타입과 literal 타입이 맞는지 검사합니다. */
 static SqlStatus ensure_type_match(DataType expected,
                                    const Value *actual,
                                    int line,
@@ -38,6 +40,7 @@ static SqlStatus ensure_type_match(DataType expected,
     return SQL_STATUS_OK;
 }
 
+/* INSERT AST를 실행 가능한 row 형태로 정규화합니다. */
 static SqlStatus bind_insert(const Statement *statement,
                              const TableSchema *schema,
                              BoundInsertStmt *out_insert,
@@ -66,6 +69,7 @@ static SqlStatus bind_insert(const Statement *statement,
         return SQL_STATUS_OOM;
     }
 
+    /* 컬럼 목록이 없으면 VALUES 순서가 이미 schema 순서와 같다고 가정합니다. */
     if (insert->column_count == 0U) {
         if (insert->value_count != schema->column_count) {
             table_schema_free(&out_insert->schema);
@@ -118,6 +122,9 @@ static SqlStatus bind_insert(const Statement *statement,
             return SQL_STATUS_OOM;
         }
 
+        /* ⭐ 사용자가 다른 순서로 컬럼을 적어도,
+         * 여기서 schema 순서로 다시 맞춰 이후 단계는 항상 같은 row 구조만 보게 합니다.
+         */
         for (index = 0U; index < insert->column_count; index++) {
             int column_index = table_schema_find_column(schema, insert->column_names[index]);
             if (column_index < 0) {
@@ -180,6 +187,7 @@ static SqlStatus bind_insert(const Statement *statement,
     return SQL_STATUS_OK;
 }
 
+/* SELECT AST를 projection/filter가 해석된 bound 형태로 바꿉니다. */
 static SqlStatus bind_select(const Statement *statement,
                              const TableSchema *schema,
                              BoundSelectStmt *out_select,
@@ -199,6 +207,7 @@ static SqlStatus bind_select(const Statement *statement,
         return status;
     }
 
+    /* ⭐ binder는 사용자가 본 컬럼 이름을 내부 schema index로 바꾸는 단계입니다. */
     if (select->select_all) {
         out_select->projection_count = schema->column_count;
         out_select->projection_indices = (size_t *)calloc(schema->column_count, sizeof(size_t));
@@ -235,6 +244,9 @@ static SqlStatus bind_select(const Statement *statement,
         }
     }
 
+    /* WHERE를 column/value 기반 단순 predicate로 바꿔
+     * planner와 executor가 SQL 문법 자체를 몰라도 되게 만듭니다.
+     */
     if (select->where_clause != NULL) {
         const AstExpr *where = select->where_clause;
         const AstExpr *left;
@@ -300,6 +312,7 @@ static SqlStatus bind_select(const Statement *statement,
     return SQL_STATUS_OK;
 }
 
+/* BoundScript 컨테이너를 빈 상태로 초기화합니다. */
 void bound_script_init(BoundScript *script) {
     if (script == NULL) {
         return;
@@ -309,6 +322,7 @@ void bound_script_init(BoundScript *script) {
     script->statements = NULL;
 }
 
+/* BoundScript 전체를 순회하며 schema, row, projection 메모리를 정리합니다. */
 void bound_script_free(BoundScript *script) {
     size_t index;
 
@@ -335,6 +349,9 @@ void bound_script_free(BoundScript *script) {
     script->statement_count = 0U;
 }
 
+/* 🧭 binder의 진입점입니다.
+ * AST에 실제 스키마 정보를 결합해서 planner가 바로 사용할 수 있는 형태로 만듭니다.
+ */
 SqlStatus binder_bind_script(const Catalog *catalog, const AstScript *ast, BoundScript *out_script, SqlError *err) {
     size_t index;
 
@@ -345,6 +362,7 @@ SqlStatus binder_bind_script(const Catalog *catalog, const AstScript *ast, Bound
 
     bound_script_init(out_script);
 
+    /* 각 statement는 독립적으로 스키마를 읽고 검증합니다. */
     for (index = 0U; index < ast->statement_count; index++) {
         const Statement *statement = &ast->statements[index];
         TableSchema schema;

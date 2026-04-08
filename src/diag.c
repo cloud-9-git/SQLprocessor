@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/* 오류 객체를 "아직 오류 없음" 상태로 초기화합니다. */
 void sql_error_init(SqlError *err) {
     if (err == NULL) {
         return;
@@ -14,6 +15,7 @@ void sql_error_init(SqlError *err) {
     err->message[0] = '\0';
 }
 
+/* va_list 버전의 공용 오류 기록 함수입니다. */
 void sql_error_vset(SqlError *err, int line, int column, int statement_index, const char *fmt, va_list args) {
     if (err == NULL) {
         return;
@@ -26,6 +28,7 @@ void sql_error_vset(SqlError *err, int line, int column, int statement_index, co
     err->message[sizeof(err->message) - 1] = '\0';
 }
 
+/* printf 스타일 인자를 받아 오류 메시지를 완성합니다. */
 void sql_error_set(SqlError *err, int line, int column, int statement_index, const char *fmt, ...) {
     va_list args;
 
@@ -34,6 +37,7 @@ void sql_error_set(SqlError *err, int line, int column, int statement_index, con
     va_end(args);
 }
 
+/* 상태 코드를 로그나 디버깅용 문자열로 바꿉니다. */
 const char *sql_status_name(SqlStatus status) {
     switch (status) {
         case SQL_STATUS_OK:

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* lexer가 현재 어느 위치를 읽고 있는지 추적하는 상태입니다. */
 typedef struct {
     const char *input;
     size_t position;
@@ -11,6 +12,7 @@ typedef struct {
     int column;
 } LexerState;
 
+/* 원문 일부를 복사해 토큰 lexeme으로 저장합니다. */
 static char *dup_slice(const char *start, size_t length, SqlError *err) {
     char *text = (char *)malloc(length + 1U);
 
@@ -24,6 +26,7 @@ static char *dup_slice(const char *start, size_t length, SqlError *err) {
     return text;
 }
 
+/* 키워드 비교에 쓰는 대소문자 무시 문자열 비교 함수입니다. */
 static int equals_ignore_case(const char *left, const char *right) {
     size_t index = 0U;
 
@@ -37,6 +40,7 @@ static int equals_ignore_case(const char *left, const char *right) {
     return left[index] == '\0' && right[index] == '\0';
 }
 
+/* 식별자 문자열이 예약어인지 일반 이름인지 판별합니다. */
 static TokenType keyword_type(const char *lexeme) {
     if (equals_ignore_case(lexeme, "INSERT")) {
         return TOKEN_INSERT;
@@ -65,6 +69,7 @@ static TokenType keyword_type(const char *lexeme) {
     return TOKEN_IDENTIFIER;
 }
 
+/* 문자 하나를 소비하면서 줄/열 위치도 함께 갱신합니다. */
 static void lexer_advance(LexerState *state) {
     if (state->input[state->position] == '\n') {
         state->line++;
@@ -75,6 +80,7 @@ static void lexer_advance(LexerState *state) {
     state->position++;
 }
 
+/* 동적 토큰 배열 끝에 새 토큰 하나를 추가합니다. */
 static SqlStatus push_token(TokenArray *tokens, TokenType type, char *lexeme, int line, int column, SqlError *err) {
     Token *items = (Token *)realloc(tokens->items, sizeof(Token) * (tokens->count + 1U));
 
@@ -93,6 +99,7 @@ static SqlStatus push_token(TokenArray *tokens, TokenType type, char *lexeme, in
     return SQL_STATUS_OK;
 }
 
+/* 식별자 또는 키워드를 읽어 토큰으로 만듭니다. */
 static SqlStatus lex_identifier_or_keyword(LexerState *state, TokenArray *tokens, SqlError *err) {
     size_t start = state->position;
     int line = state->line;
@@ -111,6 +118,7 @@ static SqlStatus lex_identifier_or_keyword(LexerState *state, TokenArray *tokens
     return push_token(tokens, keyword_type(lexeme), lexeme, line, column, err);
 }
 
+/* 정수 리터럴을 읽어 NUMBER 토큰으로 만듭니다. */
 static SqlStatus lex_number(LexerState *state, TokenArray *tokens, SqlError *err) {
     size_t start = state->position;
     int line = state->line;
@@ -132,6 +140,7 @@ static SqlStatus lex_number(LexerState *state, TokenArray *tokens, SqlError *err
     return push_token(tokens, TOKEN_NUMBER, lexeme, line, column, err);
 }
 
+/* 따옴표 문자열을 읽고 지원하는 escape를 실제 문자로 복원합니다. */
 static SqlStatus lex_string(LexerState *state, TokenArray *tokens, SqlError *err) {
     size_t capacity = 16U;
     size_t length = 0U;
@@ -197,6 +206,7 @@ static SqlStatus lex_string(LexerState *state, TokenArray *tokens, SqlError *err
     return push_token(tokens, TOKEN_STRING, buffer, line, column, err);
 }
 
+/* 🧭 SQL 원문을 처음부터 끝까지 훑어 TokenArray로 변환합니다. */
 SqlStatus lexer_tokenize(const char *sql, TokenArray *out_tokens, SqlError *err) {
     LexerState state;
     SqlStatus status;
@@ -304,6 +314,7 @@ SqlStatus lexer_tokenize(const char *sql, TokenArray *out_tokens, SqlError *err)
     return SQL_STATUS_OK;
 }
 
+/* 토큰 배열 안에 저장된 lexeme 메모리를 모두 정리합니다. */
 void token_array_free(TokenArray *tokens) {
     size_t index;
 
@@ -321,6 +332,7 @@ void token_array_free(TokenArray *tokens) {
     tokens->count = 0U;
 }
 
+/* trace나 오류 메시지에서 토큰 타입 이름을 보여주기 위한 함수입니다. */
 const char *token_type_name(TokenType type) {
     switch (type) {
         case TOKEN_EOF:

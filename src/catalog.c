@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* schema/row 유틸 전반에서 재사용하는 문자열 복사 함수입니다. */
 static char *dup_string(const char *text, SqlError *err) {
     size_t length;
     char *copy;
@@ -24,6 +25,7 @@ static char *dup_string(const char *text, SqlError *err) {
     return copy;
 }
 
+/* 스키마 키워드와 컬럼 이름 비교 시 대소문자를 무시합니다. */
 static int equals_ignore_case(const char *left, const char *right) {
     size_t index = 0U;
 
@@ -37,6 +39,7 @@ static int equals_ignore_case(const char *left, const char *right) {
     return left[index] == '\0' && right[index] == '\0';
 }
 
+/* TableSchema 뒤에 새 컬럼 정의를 하나 추가합니다. */
 static SqlStatus append_column(TableSchema *schema, const char *name, DataType type, SqlError *err) {
     ColumnDef *new_columns;
     size_t new_count = schema->column_count + 1U;
@@ -61,6 +64,7 @@ static SqlStatus append_column(TableSchema *schema, const char *name, DataType t
     return SQL_STATUS_OK;
 }
 
+/* TableSchema를 비어 있는 상태로 초기화합니다. */
 void table_schema_init(TableSchema *schema) {
     if (schema == NULL) {
         return;
@@ -71,6 +75,7 @@ void table_schema_init(TableSchema *schema) {
     schema->columns = NULL;
 }
 
+/* TableSchema 안의 테이블 이름과 컬럼 배열을 모두 해제합니다. */
 void table_schema_free(TableSchema *schema) {
     size_t index;
 
@@ -91,6 +96,7 @@ void table_schema_free(TableSchema *schema) {
     schema->column_count = 0U;
 }
 
+/* 스키마를 깊은 복사해 binder/planner/executor가 독립적으로 사용할 수 있게 합니다. */
 SqlStatus table_schema_clone(const TableSchema *src, TableSchema *dest, SqlError *err) {
     size_t index;
 
@@ -116,6 +122,7 @@ SqlStatus table_schema_clone(const TableSchema *src, TableSchema *dest, SqlError
     return SQL_STATUS_OK;
 }
 
+/* 컬럼 이름을 schema index로 해석합니다. */
 int table_schema_find_column(const TableSchema *schema, const char *column_name) {
     size_t index;
 
@@ -132,6 +139,7 @@ int table_schema_find_column(const TableSchema *schema, const char *column_name)
     return -1;
 }
 
+/* Row를 빈 상태로 초기화합니다. */
 void row_init(Row *row) {
     if (row == NULL) {
         return;
@@ -141,6 +149,7 @@ void row_init(Row *row) {
     row->values = NULL;
 }
 
+/* Row 안의 값 배열과 TEXT 메모리를 모두 해제합니다. */
 void row_free(Row *row) {
     size_t index;
 
@@ -157,6 +166,7 @@ void row_free(Row *row) {
     row->value_count = 0U;
 }
 
+/* Row를 깊은 복사합니다. */
 SqlStatus row_clone(const Row *src, Row *dest, SqlError *err) {
     size_t index;
 
@@ -188,6 +198,7 @@ SqlStatus row_clone(const Row *src, Row *dest, SqlError *err) {
     return SQL_STATUS_OK;
 }
 
+/* catalog가 참조할 DB 루트 경로를 저장합니다. */
 void catalog_init(Catalog *catalog, const char *db_root) {
     if (catalog == NULL) {
         return;
@@ -196,6 +207,7 @@ void catalog_init(Catalog *catalog, const char *db_root) {
     catalog->db_root = db_root;
 }
 
+/* 🧭 schema 파일을 읽어 TableSchema 객체로 바꾸는 핵심 함수입니다. */
 SqlStatus catalog_load_table(const char *db_root, const char *table_name, TableSchema *out_schema, SqlError *err) {
     char path[1024];
     FILE *file;

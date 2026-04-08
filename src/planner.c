@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* plan 안에 저장할 문자열을 새 메모리로 복사합니다. */
 static char *dup_string(const char *text, SqlError *err) {
     size_t length;
     char *copy;
@@ -22,6 +23,7 @@ static char *dup_string(const char *text, SqlError *err) {
     return copy;
 }
 
+/* plan tree를 재귀적으로 해제합니다. */
 static void plan_node_free(PlanNode *node) {
     if (node == NULL) {
         return;
@@ -48,6 +50,7 @@ static void plan_node_free(PlanNode *node) {
     free(node);
 }
 
+/* 새 PlanNode를 0으로 초기화해서 생성합니다. */
 static PlanNode *new_node(PlanNodeKind kind, SqlError *err) {
     PlanNode *node = (PlanNode *)calloc(1U, sizeof(PlanNode));
 
@@ -59,6 +62,7 @@ static PlanNode *new_node(PlanNodeKind kind, SqlError *err) {
     return node;
 }
 
+/* PlanScript 컨테이너를 빈 상태로 초기화합니다. */
 void plan_script_init(PlanScript *script) {
     if (script == NULL) {
         return;
@@ -68,6 +72,7 @@ void plan_script_init(PlanScript *script) {
     script->statements = NULL;
 }
 
+/* PlanScript 전체를 순회하며 schema와 plan tree를 해제합니다. */
 void plan_script_free(PlanScript *script) {
     size_t index;
 
@@ -85,6 +90,7 @@ void plan_script_free(PlanScript *script) {
     script->statement_count = 0U;
 }
 
+/* projection index 배열을 plan 전용 메모리로 복사합니다. */
 static SqlStatus clone_projection_indices(const size_t *src, size_t count, size_t **out_indices, SqlError *err) {
     size_t *copy;
 
@@ -104,6 +110,7 @@ static SqlStatus clone_projection_indices(const size_t *src, size_t count, size_
     return SQL_STATUS_OK;
 }
 
+/* BoundInsertStmt를 INSERT plan node 하나로 감쌉니다. */
 static SqlStatus build_insert_plan(const BoundInsertStmt *insert, PlanStatement *out_statement, SqlError *err) {
     PlanNode *node = new_node(PLAN_NODE_INSERT, err);
     SqlStatus status;
@@ -129,6 +136,7 @@ static SqlStatus build_insert_plan(const BoundInsertStmt *insert, PlanStatement 
     return SQL_STATUS_OK;
 }
 
+/* BoundSelectStmt를 SELECT용 논리 계획 체인으로 변환합니다. */
 static SqlStatus build_select_plan(const BoundSelectStmt *select, PlanStatement *out_statement, SqlError *err) {
     PlanNode *scan = new_node(PLAN_NODE_SEQ_SCAN, err);
     PlanNode *current;
@@ -146,6 +154,9 @@ static SqlStatus build_select_plan(const BoundSelectStmt *select, PlanStatement 
         return SQL_STATUS_OOM;
     }
 
+    /* ⭐ v1의 SELECT 계획은 아래처럼 단일 체인으로 구성됩니다.
+     * PROJECT -> FILTER -> SEQ_SCAN
+     */
     current = scan;
     if (select->has_filter) {
         filter = new_node(PLAN_NODE_FILTER, err);
@@ -184,6 +195,9 @@ static SqlStatus build_select_plan(const BoundSelectStmt *select, PlanStatement 
     return SQL_STATUS_OK;
 }
 
+/* 🧭 planner의 진입점입니다.
+ * binder가 해석한 의미를 "어떤 순서로 실행할지"라는 계획 구조로 바꿉니다.
+ */
 SqlStatus planner_build_script(const BoundScript *bound, PlanScript *out_plan, SqlError *err) {
     size_t index;
 
@@ -204,6 +218,9 @@ SqlStatus planner_build_script(const BoundScript *bound, PlanScript *out_plan, S
     }
 
     out_plan->statement_count = bound->statement_count;
+    /* planner는 실행 모양만 결정합니다.
+     * SQL 문법 해석과 스키마 검증은 앞선 단계에서 끝났다고 가정합니다.
+     */
     for (index = 0U; index < bound->statement_count; index++) {
         const BoundStatement *source = &bound->statements[index];
         PlanStatement *target = &out_plan->statements[index];
@@ -240,6 +257,7 @@ SqlStatus planner_build_script(const BoundScript *bound, PlanScript *out_plan, S
     return SQL_STATUS_OK;
 }
 
+/* trace 출력용으로 PlanNodeKind를 문자열로 바꿉니다. */
 const char *plan_node_kind_name(PlanNodeKind kind) {
     switch (kind) {
         case PLAN_NODE_INSERT:

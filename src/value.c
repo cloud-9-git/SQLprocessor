@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 문자열을 새 메모리에 복사하는 작은 유틸입니다. */
 static char *dup_string(const char *text, SqlError *err) {
     size_t length;
     char *copy;
@@ -24,6 +25,7 @@ static char *dup_string(const char *text, SqlError *err) {
     return copy;
 }
 
+/* 타입 문자열 비교에서 대소문자를 무시하기 위한 헬퍼입니다. */
 static int equals_ignore_case(const char *left, const char *right) {
     size_t index = 0U;
 
@@ -37,6 +39,7 @@ static int equals_ignore_case(const char *left, const char *right) {
     return left[index] == '\0' && right[index] == '\0';
 }
 
+/* Value를 안전한 기본값으로 초기화합니다. */
 void value_init(Value *value) {
     if (value == NULL) {
         return;
@@ -46,6 +49,7 @@ void value_init(Value *value) {
     value->as.int_value = 0;
 }
 
+/* 정수 Value를 즉시 생성합니다. */
 Value value_make_int(long long value) {
     Value result;
 
@@ -54,6 +58,7 @@ Value value_make_int(long long value) {
     return result;
 }
 
+/* 불리언 Value를 즉시 생성합니다. */
 Value value_make_bool(int value) {
     Value result;
 
@@ -62,6 +67,7 @@ Value value_make_bool(int value) {
     return result;
 }
 
+/* TEXT Value를 만들 때 문자열까지 깊은 복사합니다. */
 SqlStatus value_make_text(Value *out, const char *text, SqlError *err) {
     if (out == NULL) {
         sql_error_set(err, 0, 0, 0, "value output pointer is null");
@@ -77,6 +83,7 @@ SqlStatus value_make_text(Value *out, const char *text, SqlError *err) {
     return SQL_STATUS_OK;
 }
 
+/* Value 전체를 깊은 복사합니다. */
 SqlStatus value_clone(const Value *src, Value *dest, SqlError *err) {
     if (src == NULL || dest == NULL) {
         sql_error_set(err, 0, 0, 0, "value clone received null pointer");
@@ -105,6 +112,7 @@ SqlStatus value_clone(const Value *src, Value *dest, SqlError *err) {
     return SQL_STATUS_OK;
 }
 
+/* TEXT 타입이 들고 있는 메모리를 해제합니다. */
 void value_free(Value *value) {
     if (value == NULL) {
         return;
@@ -116,6 +124,7 @@ void value_free(Value *value) {
     }
 }
 
+/* executor와 binder가 사용하는 공용 값 비교 함수입니다. */
 int value_equal(const Value *left, const Value *right) {
     if (left == NULL || right == NULL || left->type != right->type) {
         return 0;
@@ -136,6 +145,7 @@ int value_equal(const Value *left, const Value *right) {
     }
 }
 
+/* 타입 enum을 SQL/문서용 이름으로 바꿉니다. */
 const char *value_type_name(DataType type) {
     switch (type) {
         case DATA_TYPE_INT:
@@ -149,6 +159,7 @@ const char *value_type_name(DataType type) {
     }
 }
 
+/* 스키마 파일의 타입 문자열을 내부 enum으로 바꿉니다. */
 SqlStatus value_parse_type_name(const char *name, DataType *out_type) {
     if (name == NULL || out_type == NULL) {
         return SQL_STATUS_ERROR;
@@ -170,6 +181,7 @@ SqlStatus value_parse_type_name(const char *name, DataType *out_type) {
     return SQL_STATUS_ERROR;
 }
 
+/* Value를 저장 파일이나 표 출력에 사용할 평문 문자열로 만듭니다. */
 SqlStatus value_to_plain_text(const Value *value, char **out_text, SqlError *err) {
     char buffer[64];
     int written;

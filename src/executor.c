@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* storage 콜백 실행 중 현재 statement와 결과셋을 함께 넘기기 위한 컨텍스트입니다. */
 typedef struct {
     const PlanStatement *statement;
     ResultSet *result;
 } ScanContext;
 
+/* ResultSet 하나가 들고 있는 컬럼 이름과 row 메모리를 해제합니다. */
 static void result_set_free(ResultSet *result) {
     size_t index;
 
@@ -32,6 +34,7 @@ static void result_set_free(ResultSet *result) {
     result->column_count = 0U;
 }
 
+/* ExecutionOutput을 빈 상태로 초기화합니다. */
 void execution_output_init(ExecutionOutput *output) {
     if (output == NULL) {
         return;
@@ -41,6 +44,7 @@ void execution_output_init(ExecutionOutput *output) {
     output->results = NULL;
 }
 
+/* ExecutionOutput에 들어 있는 모든 ResultSet을 해제합니다. */
 void execution_output_free(ExecutionOutput *output) {
     size_t index;
 
@@ -56,6 +60,7 @@ void execution_output_free(ExecutionOutput *output) {
     output->result_count = 0U;
 }
 
+/* 결과셋에 저장할 컬럼 이름을 복사할 때 쓰는 헬퍼입니다. */
 static char *dup_string(const char *text, SqlError *err) {
     size_t length;
     char *copy;
@@ -71,6 +76,7 @@ static char *dup_string(const char *text, SqlError *err) {
     return copy;
 }
 
+/* 단일 체인 plan에서 원하는 종류의 노드를 찾아 반환합니다. */
 static const PlanNode *find_node(const PlanNode *root, PlanNodeKind kind) {
     const PlanNode *current = root;
 
@@ -84,6 +90,7 @@ static const PlanNode *find_node(const PlanNode *root, PlanNodeKind kind) {
     return NULL;
 }
 
+/* 원본 row에서 projection에 해당하는 컬럼만 뽑아 새 row를 만듭니다. */
 static SqlStatus clone_projected_row(const Row *source,
                                      const size_t *projection_indices,
                                      size_t projection_count,
@@ -110,6 +117,7 @@ static SqlStatus clone_projected_row(const Row *source,
     return SQL_STATUS_OK;
 }
 
+/* storage가 읽어온 row를 현재 SELECT 계획에 맞게 filter/project 해서 결과셋에 추가합니다. */
 static SqlStatus scan_callback(const Row *row, void *ctx, SqlError *err) {
     ScanContext *scan_ctx = (ScanContext *)ctx;
     const PlanNode *filter = find_node(scan_ctx->statement->root, PLAN_NODE_FILTER);
@@ -118,6 +126,7 @@ static SqlStatus scan_callback(const Row *row, void *ctx, SqlError *err) {
     Row *grown_rows;
     SqlStatus status;
 
+    /* ⭐ 스캔된 각 row는 항상 `FILTER -> PROJECT` 순서로 처리됩니다. */
     if (filter != NULL) {
         if (!value_equal(&row->values[filter->as.filter.column_index], &filter->as.filter.value)) {
             return SQL_STATUS_OK;
@@ -144,6 +153,7 @@ static SqlStatus scan_callback(const Row *row, void *ctx, SqlError *err) {
     return SQL_STATUS_OK;
 }
 
+/* SELECT statement 하나를 실제 결과셋으로 실행합니다. */
 static SqlStatus execute_select(ExecutionContext *ctx,
                                 const PlanStatement *statement,
                                 ResultSet *out_result,
@@ -158,6 +168,7 @@ static SqlStatus execute_select(ExecutionContext *ctx,
         return SQL_STATUS_ERROR;
     }
 
+    /* 출력 컬럼 순서는 storage 순서가 아니라 PROJECT 노드가 결정합니다. */
     out_result->column_count = project->as.project.projection_count;
     out_result->column_names = (char **)calloc(out_result->column_count, sizeof(char *));
     out_result->row_count = 0U;
@@ -181,6 +192,9 @@ static SqlStatus execute_select(ExecutionContext *ctx,
     return storage_scan_rows(ctx->db_root, &statement->schema, scan_callback, &scan_ctx, err);
 }
 
+/* 🧭 executor의 진입점입니다.
+ * INSERT는 저장, SELECT는 ResultSet 생성으로 분기해 statement를 순차 실행합니다.
+ */
 SqlStatus executor_run_script(ExecutionContext *ctx, const PlanScript *plan, ExecutionOutput *out_output, SqlError *err) {
     size_t index;
 
@@ -190,6 +204,9 @@ SqlStatus executor_run_script(ExecutionContext *ctx, const PlanScript *plan, Exe
     }
 
     execution_output_init(out_output);
+    /* ⚠️ statement-level autocommit 방식입니다.
+     * 앞 문장이 성공한 뒤 뒤 문장이 실패해도 앞 문장 결과는 유지됩니다.
+     */
     for (index = 0U; index < plan->statement_count; index++) {
         const PlanStatement *statement = &plan->statements[index];
         SqlStatus status;

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* CLI에서 받은 실행 옵션을 한곳에 모아두는 구조체입니다. */
 typedef struct {
     const char *db_root;
     const char *input_path;
@@ -16,10 +17,12 @@ typedef struct {
     int trace;
 } CliOptions;
 
+/* 잘못된 인자를 입력했을 때 보여줄 사용법입니다. */
 static void print_usage(FILE *stream) {
     fputs("usage: sqlproc --db-root <dir> --input <sql-file> [--check] [--trace]\n", stream);
 }
 
+/* SQL 파일 전체를 메모리로 읽어 parser에 넘길 문자열을 준비합니다. */
 static SqlStatus read_file(const char *path, char **out_text, SqlError *err) {
     FILE *file;
     long size;
@@ -75,6 +78,7 @@ static SqlStatus read_file(const char *path, char **out_text, SqlError *err) {
     return SQL_STATUS_OK;
 }
 
+/* CLI 인자를 해석해 엔진이 사용할 옵션 구조체로 바꿉니다. */
 static SqlStatus parse_args(int argc, char **argv, CliOptions *out_options, SqlError *err) {
     int index;
 
@@ -114,6 +118,9 @@ static SqlStatus parse_args(int argc, char **argv, CliOptions *out_options, SqlE
     return SQL_STATUS_OK;
 }
 
+/* 🧭 프로그램의 실제 진입점입니다.
+ * `파일 읽기 -> 파싱 -> 바인딩 -> 플래닝 -> 실행 -> 출력` 순서로 호출됩니다.
+ */
 int main(int argc, char **argv) {
     CliOptions options;
     Catalog catalog;
@@ -132,6 +139,9 @@ int main(int argc, char **argv) {
     plan_script_init(&plan);
     execution_output_init(&output);
 
+    /* 🧭 CLI 실행은 항상 같은 파이프라인을 따릅니다.
+     * file -> parse -> bind -> plan -> execute -> render
+     */
     status = parse_args(argc, argv, &options, &err);
     if (status != SQL_STATUS_OK) {
         print_usage(stderr);
@@ -174,6 +184,7 @@ int main(int argc, char **argv) {
         renderer_print_trace(stderr, &plan);
     }
 
+    /* ⭐ --check는 실제 실행 전에 멈추므로 데이터 파일을 변경하지 않습니다. */
     if (options.check_only) {
         renderer_print_check_ok(stdout, plan.statement_count);
         free(sql_text);

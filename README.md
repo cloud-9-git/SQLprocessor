@@ -37,6 +37,40 @@
 
 이 구조 덕분에 이후 성능 개선은 외부 인터페이스를 깨지 않고 내부 구현을 교체하는 방식으로 진행할 수 있습니다.
 
+## Reading Guide
+처음 보는 사람이라면 아래 순서로 읽는 것이 가장 이해가 쉽습니다.
+
+1. 큰 그림부터 파악
+   - `README.md`
+   - `docs/architecture.md`
+   - 무엇을 지원하는지, 계층이 왜 나뉘었는지 먼저 봅니다.
+2. 실제 실행 진입점 확인
+   - `src/main.c`
+   - `file -> parse -> bind -> plan -> execute -> render` 파이프라인이 어떻게 연결되는지 봅니다.
+3. SQL이 구조화되는 과정 확인
+   - `src/lexer.c`
+   - `src/parser.c`
+   - SQL 문자열이 토큰과 AST로 바뀌는 지점을 봅니다.
+4. 의미 검증과 실행 계획 생성 확인
+   - `src/binder.c`
+   - `src/planner.c`
+   - 컬럼 이름이 schema index로 바뀌고, `PROJECT -> FILTER -> SEQ_SCAN` plan이 만들어지는 흐름을 봅니다.
+5. 실제 파일 읽기/쓰기와 실행 확인
+   - `src/storage.c`
+   - `src/executor.c`
+   - row가 파일에 어떻게 저장되고, SELECT 결과가 어떻게 만들어지는지 봅니다.
+6. 데이터 구조를 옆에서 함께 확인
+   - `include/sqlproc/ast.h`
+   - `include/sqlproc/plan.h`
+   - `include/sqlproc/schema.h`
+   - 각 단계에서 어떤 데이터 구조를 주고받는지 같이 보면 흐름이 더 빨리 잡힙니다.
+7. 마지막으로 테스트 확인
+   - `tests/unit/`
+   - `tests/integration/test_cli.sh`
+   - 구현을 읽고 난 뒤 테스트를 보면 의도한 동작과 edge case를 한 번에 정리할 수 있습니다.
+
+짧게만 훑고 싶다면 `src/main.c -> src/parser.c -> src/binder.c -> src/planner.c -> src/executor.c -> src/storage.c` 순서만 읽어도 전체 흐름이 잡힙니다.
+
 ## Storage Layout
 DB root는 아래처럼 구성합니다.
 
