@@ -1,16 +1,15 @@
-﻿#include <ctype.h>
+#include <ctype.h>
 #include <string.h>
 
 #include "lexer.h"
 #include "parser.h"
 
-/* ?뚯꽌?먯꽌 ?ㅼ쓬 ?좏겙?쇰줈 ??移??욎쑝濡??대룞?⑸땲?? */
+/* 파서가 현재 토큰을 다음 토큰으로 한 칸 이동시킵니다. */
 void advance_parser(Parser *p) {
     p->current_token = get_next_token(&p->lexer);
 }
 
-/* ?꾩옱 ?좏겙??湲곕???醫낅쪟?몄? 寃?ы븯怨? 留욎쑝硫???移?吏꾪뻾?⑸땲?? */
-/* 援щЦ??留욎쑝硫?1, ?꾨땲硫?0??諛섑솚?⑸땲?? */
+/* 기대 토큰 타입이면 한 칸 이동하고 true(1), 아니면 false(0) 반환합니다. */
 static int expect_token(Parser *p, TokenType type) {
     if (p->current_token.type == type) {
         advance_parser(p);
@@ -19,7 +18,7 @@ static int expect_token(Parser *p, TokenType type) {
     return 0;
 }
 
-/* WHERE col = value ?뺥깭瑜??쎌뼱 Statement??議곌굔 而щ읆/媛믪쓣 梨꾩썎?덈떎. */
+/* WHERE col = value 형식을 파싱해 stmt에 where 컬럼/값을 채웁니다. */
 static int parse_where_clause(Parser *p, Statement *stmt) {
     if (p->current_token.type != TOKEN_WHERE) return 1;
     advance_parser(p);
@@ -42,8 +41,7 @@ static int parse_where_clause(Parser *p, Statement *stmt) {
     return 1;
 }
 
-/* SELECT 臾몄쓣 ?뚯떛?⑸땲?? */
-/* ?뺥깭: SELECT * FROM table [WHERE col = value] */
+/* SELECT 구문 파싱: SELECT * FROM table [WHERE col = value] */
 static int parse_select(Parser *p, Statement *stmt) {
     stmt->type = STMT_SELECT;
     advance_parser(p);
@@ -58,8 +56,7 @@ static int parse_select(Parser *p, Statement *stmt) {
     return parse_where_clause(p, stmt);
 }
 
-/* INSERT 臾몄쓣 ?뚯떛?⑸땲?? */
-/* ?뺥깭: INSERT INTO table VALUES (...) */
+/* INSERT 구문 파싱: INSERT INTO table VALUES (...) */
 static int parse_insert(Parser *p, Statement *stmt) {
     stmt->type = STMT_INSERT;
     advance_parser(p);
@@ -88,8 +85,7 @@ static int parse_insert(Parser *p, Statement *stmt) {
     return 1;
 }
 
-/* UPDATE 臾몄쓣 ?뚯떛?⑸땲?? */
-/* ?뺥깭: UPDATE table SET col = value [WHERE col = value] */
+/* UPDATE 구문 파싱: UPDATE table SET col = value [WHERE col = value] */
 static int parse_update(Parser *p, Statement *stmt) {
     stmt->type = STMT_UPDATE;
     advance_parser(p);
@@ -116,8 +112,7 @@ static int parse_update(Parser *p, Statement *stmt) {
     return parse_where_clause(p, stmt);
 }
 
-/* DELETE 臾몄쓣 ?뚯떛?⑸땲?? */
-/* ?뺥깭: DELETE FROM table [WHERE col = value] */
+/* DELETE 구문 파싱: DELETE FROM table [WHERE col = value] */
 static int parse_delete(Parser *p, Statement *stmt) {
     stmt->type = STMT_DELETE;
     advance_parser(p);
@@ -131,8 +126,10 @@ static int parse_delete(Parser *p, Statement *stmt) {
     return parse_where_clause(p, stmt);
 }
 
-/* SQL ??以꾩쓣 ?꾩껜 ?먮퀎?섍퀬, ?대떦 ?뚯꽌濡?遺꾧린 泥섎━?⑸땲?? */
-/* ?깃났 ??1, ?ㅽ뙣 ??0??諛섑솚?⑸땲?? */
+/*
+ * SQL 한 줄을 분해해 Statement 구조체로 바꿔 반환합니다.
+ * 성공하면 1, 실패하면 0.
+ */
 int parse_statement(const char *sql, Statement *stmt) {
     memset(stmt, 0, sizeof(Statement));
 
@@ -150,3 +147,4 @@ int parse_statement(const char *sql, Statement *stmt) {
             return 0;
     }
 }
+

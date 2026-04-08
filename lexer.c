@@ -1,16 +1,18 @@
-﻿#include <ctype.h>
+#include <ctype.h>
 #include <string.h>
 
 #include "lexer.h"
 
-/* Lexer ?곹깭??SQL 臾몄옄?닿낵 ?쒖옉 ?꾩튂瑜??ｌ뼱 ?뚯떛 以鍮꾨? ?꾨즺?⑸땲?? */
+/* Lexer 생성: SQL 문자열을 파싱할 기준 문자열과 시작 위치를 초기화합니다. */
 void init_lexer(Lexer *l, const char *sql) {
     l->sql = sql;
     l->pos = 0;
 }
 
-/* ?꾩옱 ?꾩튂?먯꽌 ???좏겙???쎄퀬 ?ㅼ쓬 ?꾩튂濡??대룞?⑸땲?? */
-/* ?レ옄/臾몄옄/臾몄옄??援щ텇??媛곴컖??留욎떠 type怨?text瑜?梨꾩썎?덈떎. */
+/*
+ * 현재 위치에서 하나의 토큰을 읽어 반환합니다.
+ * 문자, 숫자, 문자열, 기호(*,=,(,),;)를 구분합니다.
+ */
 Token get_next_token(Lexer *l) {
     Token t = { .type = TOKEN_ILLEGAL, .text = "" };
 
@@ -91,3 +93,4 @@ Token get_next_token(Lexer *l) {
     }
     return t;
 }
+

@@ -1,25 +1,30 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "executor.h"
+
 TableCache open_tables[MAX_TABLES];
 int open_table_count = 0;
 static unsigned long long g_table_access_seq = 0;
+
 static void insert_pk_sorted(TableCache *tc, long val, const char* row_str);
-/* qsort/bsearch?먯꽌 鍮꾧탳??long 媛?鍮꾧탳 ?⑥닔?낅땲?? */
+
+/* qsort/bsearch에서 long 비교에 쓰이는 비교 함수입니다. */
 static int compare_long(const void *a, const void *b) {
     long val_a = *(long *)a;
     long val_b = *(long *)b;
     return (val_a > val_b) - (val_a < val_b);
 }
-/* 罹먯떆??PK ?몃뜳??諛곗뿴?먯꽌 媛?議댁옱 ?щ?瑜??대텇 ?먯깋?쇰줈 李얠뒿?덈떎. */
+
+/* PK 인덱스 배열에서 주어진 PK 값을 이분 탐색으로 찾습니다. */
 static int find_in_pk_index(TableCache *tc, long val) {
     if (tc->record_count == 0 || tc->pk_idx == -1) return -1;
     long *found = bsearch(&val, tc->pk_index, tc->record_count, sizeof(long), compare_long);
     return found ? (int)(found - tc->pk_index) : -1;
 }
-/* ?낅젰 臾몄옄???묐걹 怨듬갚怨?媛먯떬 ?곗샂??')瑜??쒓굅??鍮꾧탳/??μ뿉 ?곌린 醫뗪쾶 ?뺣━?⑸땲?? */
+
+/* 문자열 앞뒤 공백을 제거하고, 필요하면 양끝의 홑따옴표를 제거합니다. */
 void trim_and_unquote(char *str) {
     if (!str) return;
     char *start = str;
@@ -35,7 +40,8 @@ void trim_and_unquote(char *str) {
         memmove(str, start, strlen(start) + 1);
     }
 }
-/* 臾몄옄??鍮꾧탳 ?꾩뿉 怨듬갚/?곗샂?쒕? ?뺣━??媛숈? 媛믪씤吏 ?뺤씤?⑸땲?? */
+
+/* 값 비교를 위해 둘 다 trim/quote 정규화한 뒤 동일 여부를 반환합니다. */
 int compare_value(const char *field, const char *search_val) {
     char f_buf[256];
     char v_buf[256];
@@ -47,7 +53,8 @@ int compare_value(const char *field, const char *search_val) {
     trim_and_unquote(v_buf);
     return strcmp(f_buf, v_buf) == 0;
 }
-/* CSV ??以꾩쓣 而대쭏 湲곗??쇰줈 ?꾨뱶 ?⑥쐞 諛곗뿴濡?遺꾪빐?⑸땲?? */
+
+/* CSV 한 줄을 쉼표 기준으로 나누어 fields 배열에 포인터를 채웁니다. */
 void parse_csv_row(const char *row, char *fields[MAX_COLS], char *buffer) {
     strncpy(buffer, row, 1023);
     buffer[1023] = '\0';
@@ -64,7 +71,8 @@ void parse_csv_row(const char *row, char *fields[MAX_COLS], char *buffer) {
         p++;
     }
 }
-/* 而щ읆 ?대쫫?쇰줈 ?꾩옱 ?뚯씠釉붿뿉??而щ읆 ?몃뜳?ㅻ? 李얠뒿?덈떎. */
+
+/* 컬럼 이름으로 컬럼 인덱스를 반환합니다. 못 찾으면 -1. */
 static int get_col_idx(TableCache *tc, const char *col_name) {
     if (!col_name || strlen(col_name) == 0) return -1;
     int i;
@@ -73,7 +81,8 @@ static int get_col_idx(TableCache *tc, const char *col_name) {
     }
     return -1;
 }
-/* 罹먯떆???꾩옱 ?곹깭(?ㅻ뜑 + 紐⑤뱺 ?덉퐫??瑜?CSV ?뚯씪濡??ㅼ떆 ?곷땲?? */
+
+/* 메모리 캐시 상태를 현재까지의 CSV 파일 형태로 다시 저장합니다. */
 void rewrite_file(TableCache *tc) {
     int i;
     if (tc->file) fclose(tc->file);
@@ -97,17 +106,20 @@ void rewrite_file(TableCache *tc) {
     }
     fflush(tc->file);
 }
-/* LRU ?뺤콉?먯꽌 援먯껜 ??곸씠 ?????덈룄濡??ъ슜 ?쒓컖??媛깆떊?⑸땲?? */
+
+/* 접근 이벤트를 남겨 LRU 교체 순서를 갱신합니다. */
 static void touch_table(TableCache *tc) {
     tc->last_used_seq = ++g_table_access_seq;
 }
-/* TableCache ?щ’???덈줈 ?ъ슜?섎뒗 ?곹깭濡?珥덇린?뷀빀?덈떎. */
+
+/* 캐시 슬롯을 완전히 비우고 기본값으로 재설정합니다. */
 static void reset_table_cache(TableCache *tc) {
     memset(tc, 0, sizeof(TableCache));
     tc->file = NULL;
     tc->pk_idx = -1;
 }
-/* ?꾩옱 ?대┛ ?뚯씠釉?以?媛???ㅻ옯?숈븞 ?ъ슜?섏? ?딆? ?щ’??李얠뒿?덈떎. */
+
+/* 현재 가장 오래된 접근 순서의 슬롯을 찾아 반환합니다. */
 static int find_lru_table_index(void) {
     int i;
     int lru_index = 0;
@@ -120,7 +132,8 @@ static int find_lru_table_index(void) {
     }
     return lru_index;
 }
-/* ???뚯씪?????곹깭???몃뱾濡?TableCache ?щ’??梨꾩썎?덈떎. */
+
+/* 파일을 열어 헤더와 레코드를 TableCache에 적재합니다. */
 static int load_table_contents(TableCache *tc, const char *name, FILE *f) {
     reset_table_cache(tc);
     strncpy(tc->table_name, name, 255);
@@ -131,9 +144,10 @@ static int load_table_contents(TableCache *tc, const char *name, FILE *f) {
     tc->col_count = 0;
     tc->uk_count = 0;
     tc->last_used_seq = ++g_table_access_seq;
+
     char header[1024];
     if (fgets(header, sizeof(header), f)) {
-        char *token = strtok(header, ",\n\r");
+        char *token = strtok(header, ",\r\n");
         int idx = 0;
         while (token && idx < MAX_COLS) {
             char *paren = strchr(token, '(');
@@ -158,11 +172,12 @@ static int load_table_contents(TableCache *tc, const char *name, FILE *f) {
                 tc->cols[idx].name[sizeof(tc->cols[idx].name) - 1] = '\0';
                 tc->cols[idx].type = COL_NORMAL;
             }
-            token = strtok(NULL, ",\n\r");
+            token = strtok(NULL, ",\r\n");
             idx++;
         }
         tc->col_count = idx;
     }
+
     char line[1024];
     while (fgets(line, sizeof(line), f)) {
         char buffer[1024];
@@ -176,7 +191,8 @@ static int load_table_contents(TableCache *tc, const char *name, FILE *f) {
     }
     return 1;
 }
-/* PK ?뺣젹 洹쒖튃???좎??섎룄濡????덉퐫?쒕? ?곸젅???꾩튂???쎌엯?⑸땲?? */
+
+/* PK 정렬 배열을 유지하며 새 레코드를 적절한 위치에 삽입합니다. */
 void insert_pk_sorted(TableCache *tc, long val, const char* row_str) {
     if (tc->pk_idx == -1) {
         strncpy(tc->records[tc->record_count], row_str, 1023);
@@ -194,8 +210,12 @@ void insert_pk_sorted(TableCache *tc, long val, const char* row_str) {
     strncpy(tc->records[i + 1], row_str, 1023);
     tc->records[i + 1][1023] = '\0';
 }
-/* ?뚯씠釉??대쫫?쇰줈 罹먯떆瑜?李얘퀬, ?놁쑝硫??뚯씪???댁뼱 罹먯떆瑜?援ъ꽦?⑸땲?? */
-/* 罹먯떆媛 媛??李쇱쑝硫?LRU(Least Recently Used) ?쒖쑝濡?媛???ㅻ옒???щ’??援먯껜??濡쒕뱶?⑸땲?? */
+
+/*
+ * 캐시에 이미 열려 있으면 재사용하고,
+ * 없으면 파일을 열어 로드합니다.
+ * 캐시가 꽉 차면 LRU 정책으로 하나를 닫고 교체합니다.
+ */
 TableCache* get_table(const char* name) {
     int i;
     for (i = 0; i < open_table_count; i++) {
@@ -204,22 +224,25 @@ TableCache* get_table(const char* name) {
             return &open_tables[i];
         }
     }
+
     char filename[300];
     snprintf(filename, sizeof(filename), "%s.csv", name);
     FILE *f = fopen(filename, "r+");
     if (!f) {
-        printf("[?먮윭] '%s.csv' ?뚯씪???????놁뒿?덈떎.\n", name);
+        printf("[알림] '%s.csv' 파일을 열 수 없습니다.\n", name);
         return NULL;
     }
+
     TableCache *tc = NULL;
     if (open_table_count < MAX_TABLES) {
         tc = &open_tables[open_table_count++];
     } else {
         int evict_idx = find_lru_table_index();
         tc = &open_tables[evict_idx];
-        printf("[INFO] Evict table `%s` and load `%s` with LRU cache.\n", tc->table_name, name);
+        printf("[안내] LRU 정책으로 '%s'를 닫고 '%s'를 새로 엽니다.\n", tc->table_name, name);
         if (tc->file) fclose(tc->file);
     }
+
     if (!load_table_contents(tc, name, f)) {
         if (open_table_count < MAX_TABLES) open_table_count--;
         fclose(f);
@@ -227,16 +250,19 @@ TableCache* get_table(const char* name) {
     }
     return tc;
 }
-/* INSERT ?ㅽ뻾 ?듭떖 ?⑥닔: */
-/* ?됱쓣 ?뚯떛???쒖빟(NN/PK/UK)??寃?ы븯怨?罹먯떆??諛섏쁺 ???뚯씪????ν빀?덈떎. */
+
+/* INSERT: NN/PK/UK 제약을 검사한 뒤 레코드를 추가하고 파일을 갱신합니다. */
 void execute_insert(Statement *stmt) {
     TableCache *tc = get_table(stmt->table_name);
     if (!tc) return;
+
     char buffer[1024];
     char *vals[MAX_COLS] = {0};
     parse_csv_row(stmt->row_data, vals, buffer);
+
     int val_count = 0;
     while (vals[val_count] && val_count < MAX_COLS) val_count++;
+
     long new_id = 0;
     int i;
     int r;
@@ -246,29 +272,33 @@ void execute_insert(Statement *stmt) {
         strncpy(normalized_val, val, sizeof(normalized_val) - 1);
         normalized_val[sizeof(normalized_val) - 1] = '\0';
         trim_and_unquote(normalized_val);
+
         if (tc->cols[i].type == COL_NN && strlen(normalized_val) == 0) {
-            printf("[?ㅻ쪟] INSERT ?ㅽ뙣: '%s' (NN ?쒖빟).\n", tc->cols[i].name);
+            printf("[오류] INSERT 실패: '%s' 컬럼은 NN 제약을 위반했습니다.\n", tc->cols[i].name);
             return;
         }
+
         if (i == tc->pk_idx && strlen(normalized_val) > 0) {
             new_id = atol(normalized_val);
             if (find_in_pk_index(tc, new_id) != -1) {
-                printf("[?ㅻ쪟] PK 以묐났: %ld\n", new_id);
+                printf("[오류] INSERT 실패: PK 중복 값 %ld 입니다.\n", new_id);
                 return;
             }
         }
+
         if (tc->cols[i].type == COL_UK && strlen(normalized_val) > 0) {
             for (r = 0; r < tc->record_count; r++) {
                 char row_buf[1024];
                 char *f[MAX_COLS] = {0};
                 parse_csv_row(tc->records[r], f, row_buf);
                 if (compare_value(f[i], normalized_val)) {
-                    printf("[?ㅻ쪟] INSERT ?ㅽ뙣: '%s' 以묐났 (UK ?쒖빟).\n", normalized_val);
+                    printf("[오류] INSERT 실패: '%s'는 UK 제약을 위반합니다.\n", normalized_val);
                     return;
                 }
             }
         }
     }
+
     char new_line[1024] = "";
     size_t offset = 0;
     for (i = 0; i < tc->col_count; i++) {
@@ -288,17 +318,20 @@ void execute_insert(Statement *stmt) {
         if (w < 0 || (size_t)w >= sizeof(new_line) - offset) break;
         offset += w;
     }
+
     insert_pk_sorted(tc, new_id, new_line);
     tc->record_count++;
     rewrite_file(tc);
-    printf("[?꾨즺] ?곗씠??1嫄??쎌엯??n");
+    printf("[완료] INSERT 처리했습니다.\n");
 }
-/* SELECT ?ㅽ뻾: 議곌굔???놁쑝硫??꾩껜 異쒕젰, ?덉쑝硫?where ?꾪꽣 ?곸슜 異쒕젰?낅땲?? */
+
+/* SELECT: where 조건이 있으면 조건 행만, 없으면 전부 출력합니다. */
 void execute_select(Statement *stmt) {
     TableCache *tc = get_table(stmt->table_name);
     if (!tc) return;
+
     int where_idx = get_col_idx(tc, stmt->where_col);
-    printf("\n--- [%s] 議고쉶 寃곌낵 ---\n", tc->table_name);
+    printf("\n--- [SELECT RESULT] table=%s ---\n", tc->table_name);
     int i;
     for (i = 0; i < tc->record_count; i++) {
         if (where_idx != -1) {
@@ -313,26 +346,30 @@ void execute_select(Statement *stmt) {
         }
     }
 }
-/* UPDATE ?ㅽ뻾: */
-/* where 議곌굔?쇰줈 ????됱쓣 李얠븘 set 媛믪쑝濡?媛깆떊?섍퀬 ?뚯씪??媛깆떊?⑸땲?? */
+
+/* UPDATE: where 조건 대상 행을 찾아 set 컬럼을 변경합니다. */
 void execute_update(Statement *stmt) {
     TableCache *tc = get_table(stmt->table_name);
     if (!tc) return;
+
     int where_idx = get_col_idx(tc, stmt->where_col);
     int set_idx = get_col_idx(tc, stmt->set_col);
     if (where_idx == -1 || set_idx == -1) {
-        printf("[?ㅻ쪟] ???而щ읆??李얠쓣 ???놁뒿?덈떎.\n");
+        printf("[오류] WHERE 조건을 해석할 수 없습니다.\n");
         return;
     }
+
     if (set_idx == tc->pk_idx) {
-        printf("[?ㅻ쪟] PK(湲곕낯????UPDATE濡?蹂寃쏀븷 ???놁뒿?덈떎. 醫낅즺?⑸땲??\n");
+        printf("[오류] PK(기본키) 컬럼은 UPDATE에서 변경할 수 없습니다.\n");
         return;
     }
+
     trim_and_unquote(stmt->set_val);
     if (tc->cols[set_idx].type == COL_NN && strlen(stmt->set_val) == 0) {
-        printf("[?ㅻ쪟] UPDATE ?ㅽ뙣: '%s' (NN ?쒖빟).\n", tc->cols[set_idx].name);
+        printf("[오류] UPDATE 실패: '%s'는 NN 제약을 위반했습니다.\n", tc->cols[set_idx].name);
         return;
     }
+
     int match_flags[MAX_RECORDS] = {0};
     int target_count = 0;
     int i;
@@ -347,9 +384,10 @@ void execute_update(Statement *stmt) {
             target_count++;
         }
     }
+
     if (tc->cols[set_idx].type == COL_UK) {
         if (target_count > 1) {
-            printf("[?ㅻ쪟] UPDATE ?ㅽ뙣: ?ㅼ닔??????됱뿉 UK 以묐났 媛?μ꽦 ?덉뒿?덈떎.\n");
+            printf("[오류] UPDATE 실패: WHERE 조건이 여러 행을 가리켜 UK 제약이 깨집니다.\n");
             return;
         }
         for (r = 0; r < tc->record_count; r++) {
@@ -358,47 +396,51 @@ void execute_update(Statement *stmt) {
             char *f[MAX_COLS] = {0};
             parse_csv_row(tc->records[r], f, row_buf);
             if (compare_value(f[set_idx], stmt->set_val)) {
-                printf("[?ㅻ쪟] UPDATE ?ㅽ뙣: '%s' 以묐났 (UK ?쒖빟).\n", stmt->set_val);
+                printf("[오류] UPDATE 실패: '%s'는 UK 제약 위반 값입니다.\n", stmt->set_val);
                 return;
             }
         }
     }
+
     int count = 0;
     for (i = 0; i < tc->record_count; i++) {
-        if (match_flags[i]) {
-            char row_buf[1024];
-            char *fields[MAX_COLS] = {0};
-            parse_csv_row(tc->records[i], fields, row_buf);
-            char new_row[1024] = "";
-            size_t offset = 0;
-            for (j = 0; j < tc->col_count; j++) {
-                const char *val = (j == set_idx) ? stmt->set_val : (fields[j] ? fields[j] : "");
-                int w = snprintf(new_row + offset, sizeof(new_row) - offset, "%s%s", val, (j < tc->col_count - 1) ? "," : "");
-                if (w < 0 || (size_t)w >= sizeof(new_row) - offset) break;
-                offset += w;
-            }
-            strncpy(tc->records[i], new_row, 1023);
-            tc->records[i][1023] = '\0';
-            count++;
+        if (!match_flags[i]) continue;
+        char row_buf[1024];
+        char *fields[MAX_COLS] = {0};
+        parse_csv_row(tc->records[i], fields, row_buf);
+
+        char new_row[1024] = "";
+        size_t offset = 0;
+        for (j = 0; j < tc->col_count; j++) {
+            const char *val = (j == set_idx) ? stmt->set_val : (fields[j] ? fields[j] : "");
+            int w = snprintf(new_row + offset, sizeof(new_row) - offset, "%s%s", val, (j < tc->col_count - 1) ? "," : "");
+            if (w < 0 || (size_t)w >= sizeof(new_row) - offset) break;
+            offset += w;
         }
+        strncpy(tc->records[i], new_row, 1023);
+        tc->records[i][1023] = '\0';
+        count++;
     }
+
     if (count > 0) {
         rewrite_file(tc);
-        printf("[?꾨즺] %d嫄댁쓽 ?됱씠 媛깆떊??n", count);
+        printf("[완료] %d개의 행이 수정되었습니다.\n", count);
     } else {
-        printf("[?덈궡] ????됱씠 ?놁뒿?덈떎.\n");
+        printf("[알림] 조건에 맞는 행이 없습니다.\n");
     }
 }
-/* DELETE ?ㅽ뻾: */
-/* where 議곌굔??留욌뒗 ?됱쓣 紐⑤몢 ?쒓굅?섍퀬 ?⑥? ?됱쑝濡?罹먯떆瑜??뺤텞??????ν빀?덈떎. */
+
+/* DELETE: where 조건을 만족하는 행을 삭제합니다. */
 void execute_delete(Statement *stmt) {
     TableCache *tc = get_table(stmt->table_name);
     if (!tc) return;
+
     int where_idx = get_col_idx(tc, stmt->where_col);
     if (where_idx == -1) {
-        printf("[?ㅻ쪟] 議곌굔 而щ읆??李얠쓣 ???놁뒿?덈떎.\n");
+        printf("[오류] WHERE 조건을 해석할 수 없습니다.\n");
         return;
     }
+
     int count = 0;
     int i;
     int j;
@@ -417,18 +459,20 @@ void execute_delete(Statement *stmt) {
             i--;
         }
     }
+
     if (count > 0) {
         rewrite_file(tc);
-        printf("[?꾨즺] %d嫄댁씠 ??젣??n", count);
+        printf("[완료] %d개의 행이 삭제되었습니다.\n", count);
     } else {
-        printf("[?덈궡] ??젣 ??곸씠 ?놁뒿?덈떎.\n");
+        printf("[알림] 삭제할 행이 없습니다.\n");
     }
 }
-/* 醫낅즺 ?쒖젏 ?뺣━: */
-/* 吏湲덇퉴吏 ???뚯씠釉??뚯씪 ?ъ씤?곕? 紐⑤몢 ?レ뒿?덈떎. */
+
+/* 프로그램 종료 시 열려 있는 테이블 파일 핸들을 닫습니다. */
 void close_all_tables(void) {
     int i;
     for (i = 0; i < open_table_count; i++) {
         if (open_tables[i].file) fclose(open_tables[i].file);
     }
 }
+

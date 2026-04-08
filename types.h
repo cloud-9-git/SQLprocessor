@@ -1,4 +1,4 @@
-﻿#ifndef TYPES_H
+#ifndef TYPES_H
 #define TYPES_H
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #define MAX_UKS 5
 #define MAX_SQL_LEN 4096
 
-/* sample */
+/* 실행할 Statement 종류입니다. */
 typedef enum {
     STMT_INSERT,
     STMT_SELECT,
@@ -18,7 +18,7 @@ typedef enum {
     STMT_UNRECOGNIZED
 } StatementType;
 
-/* 而щ읆???쒖빟 議곌굔???섑??대뒗 ??낆엯?덈떎. (?쇰컲 / PK / UK / NN) */
+/* 컬럼 제약 타입입니다. (일반 / PK / UK / NN) */
 typedef enum {
     COL_NORMAL,
     COL_PK,
@@ -26,61 +26,39 @@ typedef enum {
     COL_NN
 } ColumnType;
 
-/* ?뚯꽌媛 ??媛쒖쓽 SQL 臾몄옣???댁꽍??寃곌낵瑜??댁뒿?덈떎. */
-/* ?? SELECT??????뚯씠釉붾챸, WHERE 議곌굔, UPDATE??set ?뺣낫 ?깆쓣 ?ш린 ?섎굹濡??꾨떖?⑸땲?? */
+/* 파서가 생성하는 실행 단위입니다. */
 typedef struct {
-    /* 臾몄옣 醫낅쪟: SELECT/INSERT/UPDATE/DELETE. */
-    StatementType type;
-    /* ????뚯씠釉??대쫫. */
-    char table_name[256];
-    /* INSERT VALUES(...) ?대????먮낯 臾몄옄?? */
-    char row_data[1024];
-    /* UPDATE ... SET ?먯꽌 諛붽? 而щ읆紐? */
-    char set_col[50];
-    /* UPDATE ... SET 媛? */
-    char set_val[256];
-    /* WHERE ?덉쓽 鍮꾧탳 ???而щ읆. */
-    char where_col[50];
-    /* WHERE ??鍮꾧탳 媛? */
-    char where_val[256];
+    StatementType type;          /* SELECT/INSERT/UPDATE/DELETE */
+    char table_name[256];        /* 대상 테이블명 */
+    char row_data[1024];         /* INSERT VALUES(...) 안쪽 문자열 */
+    char set_col[50];            /* UPDATE ... SET col = value */
+    char set_val[256];           /* UPDATE ... SET value */
+    char where_col[50];          /* WHERE col = value */
+    char where_val[256];         /* WHERE value */
 } Statement;
 
+/* 컬럼 메타데이터입니다. */
 typedef struct {
-    /* 而щ읆 ?대쫫. */
-    char name[50];
-    /* 而щ읆 ?쒖빟 ???PK, UK, NN ??. */
-    ColumnType type;
+    char name[50];               /* 컬럼 이름 */
+    ColumnType type;              /* COL_NORMAL / PK / UK / NN */
 } ColumnInfo;
 
-/* ?뚯씠釉?罹먯떆?낅땲?? */
-/* ?뚯씪?먯꽌 ?쎌? ?ㅻ뜑/?덉퐫?쒕? 硫붾え由ъ뿉 ?ｌ뼱 諛섎났 ?ъ슜??SQL 泥섎━瑜?鍮좊Ⅴ寃??⑸땲?? */
+/* 테이블 한 개를 메모리에 적재해 관리하는 캐시 구조입니다. */
 typedef struct {
-    /* ?뚯씠釉??뚯씪紐??뺤옣???쒖쇅). */
-    char table_name[256];
-    /* ?대젮 ?덈뒗 CSV ?뚯씪 ?ъ씤?? */
-    FILE *file;
-    /* ?ㅻ뜑?먯꽌 ?뚯떛??而щ읆 ?뺣낫. */
-    ColumnInfo cols[MAX_COLS];
-    /* ?ㅻ뜑???ㅼ젣 而щ읆 ?? */
-    int col_count;
-    /* PK 而щ읆 ?몃뜳???놁쑝硫?-1). */
-    int pk_idx;
-    /* UK 而щ읆 ?몃뜳??紐⑸줉. */
-    int uk_indices[MAX_UKS];
-    /* UK 而щ읆 媛쒖닔. */
-    int uk_count;
-    /* PK ?뺣젹/以묐났 寃?ъ슜 ?몃뜳??諛곗뿴. */
-    long pk_index[MAX_RECORDS];
-    /* CSV ?덉퐫??臾몄옄??罹먯떆. */
-    char records[MAX_RECORDS][1024];
-    /* ?꾩옱 罹먯떆??濡쒕뱶???덉퐫???? */
-    int record_count;
-    /* LRU 援먯껜??理쒓렐 ?묎렐 ?쒕쾲. */
-    unsigned long long last_used_seq;
+    char table_name[256];         /* users 형태 이름 */
+    FILE *file;                   /* 현재 열려 있는 CSV 파일 포인터 */
+    ColumnInfo cols[MAX_COLS];    /* 헤더 파싱 결과 */
+    int col_count;                /* 컬럼 개수 */
+    int pk_idx;                   /* PK 컬럼 인덱스, 없으면 -1 */
+    int uk_indices[MAX_UKS];      /* UK 컬럼 인덱스 목록 */
+    int uk_count;                 /* UK 컬럼 개수 */
+    long pk_index[MAX_RECORDS];    /* PK 정렬 인덱스 */
+    char records[MAX_RECORDS][1024]; /* 모든 레코드 문자열 */
+    int record_count;             /* 레코드 개수 */
+    unsigned long long last_used_seq; /* LRU 계산용 사용 순번 */
 } TableCache;
 
-/* ?댄쐶 遺꾩꽍湲곌? 留뚮뱺 ?좏겙 醫낅쪟?낅땲?? */
-/* SQL ?뚯떛 ????湲???⑥뼱瑜?臾몃쾿 ?⑥쐞濡??섎닏?덈떎. */
+/* Statement 타입으로 토크나이징된 입력을 표현합니다. */
 typedef enum {
     TOKEN_EOF,
     TOKEN_ILLEGAL,
@@ -104,33 +82,26 @@ typedef enum {
     TOKEN_SEMICOLON
 } TokenType;
 
-/* ?좏겙 ?섎굹瑜??쒗쁽?섎뒗 援ъ“泥댁엯?덈떎. */
-/* type(醫낅쪟)怨?text(?ㅼ젣 臾몄옄?????④퍡 蹂닿??⑸땲?? */
+/* Lexer가 분리한 한 개의 토큰입니다. */
 typedef struct {
-    /* ?좏겙 醫낅쪟. */
-    TokenType type;
-    /* ?좏겙???ㅼ젣 ?띿뒪?? */
-    char text[256];
+    TokenType type;               /* 토큰 타입 */
+    char text[256];               /* 원본 문자열 */
 } Token;
 
-/* ?꾩옱 SQL 臾몄옄?댁뿉???대뵒源뚯? ?쎌뿀?붿? 愿由ы빀?덈떎. */
+/* Lexer 내부 상태입니다. */
 typedef struct {
-    /* ?뚯떛??SQL 臾몄옄?? */
-    const char *sql;
-    /* ?꾩옱 ?쎈뒗 ?꾩튂. */
-    int pos;
+    const char *sql;              /* 현재 파싱 중인 SQL 문자열 */
+    int pos;                      /* 현재 문자 인덱스 */
 } Lexer;
 
-/* ?뚯꽌 ?숈옉 ?곹깭?낅땲?? */
-/* Lexer ?곹깭 + ?꾩옱 ?좏겙??臾띠뼱 ??臾몄옣 ?뚯떛???ъ슜?⑸땲?? */
+/* 파서(Parser)는 Lexer와 현재 토큰을 묶은 상태입니다. */
 typedef struct {
-    /* ?꾩옱 ?ъ슜 以묒씤 lexer ?곹깭. */
-    Lexer lexer;
-    /* ?꾩옱 ?꾩튂?먯꽌 ?쎌? ?좏겙. */
-    Token current_token;
+    Lexer lexer;                  /* 실제 토큰 생성기 */
+    Token current_token;          /* 다음에 처리할 토큰 */
 } Parser;
 
 extern TableCache open_tables[MAX_TABLES];
 extern int open_table_count;
 
 #endif
+

@@ -1,21 +1,22 @@
-﻿#ifndef EXECUTOR_H
+#ifndef EXECUTOR_H
 #define EXECUTOR_H
 
 #include "types.h"
 
-/* INSERT ?ㅽ뻾 ?붿껌??諛쏆븘 NN/PK/UK ?쒖빟 寃??????ν빀?덈떎. */
+/* INSERT Statement 실행: NN/PK/UK 제약 검사 후 레코드 추가 */
 void execute_insert(Statement *stmt);
 
-/* SELECT ?ㅽ뻾 ?붿껌??諛쏆븘 議곌굔 ?좊Т???곕씪 ?꾩껜/?꾪꽣???됱쓣 異쒕젰?⑸땲?? */
+/* SELECT Statement 실행: 조건에 맞는 행 출력 */
 void execute_select(Statement *stmt);
 
-/* UPDATE ?ㅽ뻾 ?붿껌??諛쏆븘 議곌굔 ?됱쓣 李얠븘 媛?蹂寃????뚯씪??媛깆떊?⑸땲?? */
+/* UPDATE Statement 실행: 조건 행 set 변경(제약 준수) */
 void execute_update(Statement *stmt);
 
-/* DELETE ?ㅽ뻾 ?붿껌??諛쏆븘 議곌굔 ?됱쓣 ??젣?섍퀬 ?뚯씪??媛깆떊?⑸땲?? */
+/* DELETE Statement 실행: 조건 행 삭제 */
 void execute_delete(Statement *stmt);
 
-/* ?꾨줈洹몃옩 醫낅즺 ???대┛ ?뚯씠釉??뚯씪 ?몃뱾??紐⑤몢 ?レ뒿?덈떎. */
+/* 프로그램 종료 시 캐시 파일 핸들 정리 */
 void close_all_tables(void);
 
 #endif
+

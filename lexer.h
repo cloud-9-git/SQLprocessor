@@ -1,13 +1,13 @@
-﻿#ifndef LEXER_H
+#ifndef LEXER_H
 #define LEXER_H
 
 #include "types.h"
 
-/* SQL 臾몄옄?댁쓣 ?쎄린 ?쒖옉?????덇쾶 lexer 珥덇린 ?곹깭瑜?以鍮꾪빀?덈떎. */
+/* lexer 상태를 초기화합니다. */
 void init_lexer(Lexer *l, const char *sql);
 
-/* ?꾩옱 ?꾩튂?먯꽌 ???좏겙??異붿텧??諛섑솚?⑸땲?? */
-/* ?좏겙 醫낅쪟/臾몄옄?댁쓣 梨꾩썙 ?뚯꽌媛 諛붾줈 ?ъ슜?????덇쾶 留뚮벊?덈떎. */
+/* 다음 토큰 하나를 읽어 반환합니다. */
 Token get_next_token(Lexer *l);
 
 #endif
+
