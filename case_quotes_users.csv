@@ -1,0 +1,3 @@
+id(PK),email(UK),phone(UK),pwd(NN),name
+1,'tony,stark@test.com','010-7777',jarvis,'Tony Stark'
+2,'steve@test.com','010-8888',shield,'Steve Rogers'

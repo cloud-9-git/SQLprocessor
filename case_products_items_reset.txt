@@ -1,0 +1,7 @@
+DELETE FROM case_products_items WHERE id = 1;
+DELETE FROM case_products_items WHERE id = 2;
+DELETE FROM case_products_items WHERE id = 3;
+DELETE FROM case_products_items WHERE id = 4;
+INSERT INTO case_products_items VALUES (1, SKU-100, Keyboard, 50000);
+INSERT INTO case_products_items VALUES (2, SKU-200, Mouse, 30000);
+INSERT INTO case_products_items VALUES (3, SKU-300, Monitor, 200000);

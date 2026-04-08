@@ -1,0 +1,6 @@
+SELECT * FROM case_products_items;
+INSERT INTO case_products_items VALUES (4, SKU-400, Headset, 70000);
+UPDATE case_products_items SET price = 65000 WHERE sku = SKU-400;
+SELECT * FROM case_products_items WHERE sku = SKU-400;
+DELETE FROM case_products_items WHERE name = Mouse;
+SELECT * FROM case_products_items;
