@@ -1,4 +1,4 @@
-#ifndef TYPES_H
+﻿#ifndef TYPES_H
 #define TYPES_H
 
 #include <stdio.h>
@@ -80,11 +80,11 @@ typedef enum {
     TOKEN_RPAREN,
     TOKEN_EQ,
     TOKEN_SEMICOLON
-} TokenType;
+} SqlTokenType;
 
 /* Lexer가 분리한 한 개의 토큰입니다. */
 typedef struct {
-    TokenType type;               /* 토큰 타입 */
+    SqlTokenType type;               /* 토큰 타입 */
     char text[256];               /* 원본 문자열 */
 } Token;
 
@@ -104,4 +104,5 @@ extern TableCache open_tables[MAX_TABLES];
 extern int open_table_count;
 
 #endif
+
 

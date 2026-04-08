@@ -1,4 +1,4 @@
-#include <ctype.h>
+﻿#include <ctype.h>
 #include <string.h>
 
 #include "lexer.h"
@@ -10,7 +10,7 @@ void advance_parser(Parser *p) {
 }
 
 /* 기대 토큰 타입이면 한 칸 이동하고 true(1), 아니면 false(0) 반환합니다. */
-static int expect_token(Parser *p, TokenType type) {
+static int expect_token(Parser *p, SqlTokenType type) {
     if (p->current_token.type == type) {
         advance_parser(p);
         return 1;
@@ -147,4 +147,5 @@ int parse_statement(const char *sql, Statement *stmt) {
             return 0;
     }
 }
+
 
