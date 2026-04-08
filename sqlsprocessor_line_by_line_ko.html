@@ -1,0 +1,910 @@
+﻿<!doctype html>
+<html lang='ko'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>SQLprocessor 줄 단위 상세 주석</title>
+<style>
+body{margin:0;font-family:Consolas,'D2Coding','Malgun Gothic',sans-serif;line-height:1.5;background:#f7fbff;color:#0f172a;}
+header{position:sticky;top:0;background:#0f172a;color:#fff;padding:12px 16px;z-index:3;}
+main{padding:12px;}
+section{margin:12px 0;padding:8px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px;}
+th,td{border-bottom:1px solid #dbe3ef;padding:8px 10px;vertical-align:top;word-break:break-word;}
+.line{width:60px;}
+.code{width:44%;background:#f1f5f9;white-space:pre;}
+.desc{width:56%;white-space:pre-wrap;}
+thead th{background:#e2e8f0;position:sticky;top:76px;}
+.note{margin:0 0 8px;color:#334155;}
+</style>
+</head>
+<body>
+<header><h1>SQLprocessor 줄 단위 상세 주석</h1><p class='note'>한 줄 한 줄에 '무슨 용도인지'를 붙여 설명합니다.</p></header><main>
+<section><h2>types.h</h2><p class='note'>타입과 구조체, enum을 정의해 전체 데이터 형식을 잡는 설계 파일입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#ifndef TYPES_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#define TYPES_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &lt;stdio.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>#define MAX_RECORDS 25000</td><td class='desc'>상수 `MAX_RECORDS` 선언: 한 테이블에서 관리할 수 있는 행 개수의 최대치입니다. 25000개를 초과하지 않도록 제한합니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'>#define MAX_COLS 15</td><td class='desc'>상수 `MAX_COLS` 선언: 한 행에서 사용할 수 있는 컬럼 개수 최대치입니다. 기본 파서/실행 로직이 15개를 기준으로 동작합니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'>#define MAX_TABLES 10</td><td class='desc'>상수 `MAX_TABLES` 선언: 메모리에 동시에 열어둘 수 있는 테이블 파일 개수 상한입니다.</td></tr>
+<tr><td class='line'>9</td><td class='code'>#define MAX_UKS 5</td><td class='desc'>상수 `MAX_UKS` 선언: 하나의 테이블에서 UK(고유값) 컬럼 개수의 최대치입니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'>#define MAX_SQL_LEN 4096</td><td class='desc'>상수 `MAX_SQL_LEN` 선언: 한 SQL 문장을 읽을 때 버퍼가 가질 수 있는 최대 길이입니다.</td></tr>
+<tr><td class='line'>11</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>12</td><td class='code'>typedef enum {</td><td class='desc'>enum 정의 시작입니다.</td></tr>
+<tr><td class='line'>13</td><td class='code'>    STMT_INSERT,</td><td class='desc'>enum 항목 `STMT_INSERT` 선언입니다.</td></tr>
+<tr><td class='line'>14</td><td class='code'>    STMT_SELECT,</td><td class='desc'>enum 항목 `STMT_SELECT` 선언입니다.</td></tr>
+<tr><td class='line'>15</td><td class='code'>    STMT_DELETE,</td><td class='desc'>enum 항목 `STMT_DELETE` 선언입니다.</td></tr>
+<tr><td class='line'>16</td><td class='code'>    STMT_UPDATE,</td><td class='desc'>enum 항목 `STMT_UPDATE` 선언입니다.</td></tr>
+<tr><td class='line'>17</td><td class='code'>    STMT_UNRECOGNIZED</td><td class='desc'>enum 항목 `STMT_UNRECOGNIZED` 선언입니다.</td></tr>
+<tr><td class='line'>18</td><td class='code'>} StatementType;</td><td class='desc'>StatementType enum 정의가 끝납니다. 파서에서 SQL 종류 판별에 사용됩니다.</td></tr>
+<tr><td class='line'>19</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>20</td><td class='code'>typedef enum {</td><td class='desc'>enum 정의 시작입니다.</td></tr>
+<tr><td class='line'>21</td><td class='code'>    COL_NORMAL,</td><td class='desc'>enum 항목 `COL_NORMAL` 선언입니다.</td></tr>
+<tr><td class='line'>22</td><td class='code'>    COL_PK,</td><td class='desc'>enum 항목 `COL_PK` 선언입니다.</td></tr>
+<tr><td class='line'>23</td><td class='code'>    COL_UK,</td><td class='desc'>enum 항목 `COL_UK` 선언입니다.</td></tr>
+<tr><td class='line'>24</td><td class='code'>    COL_NN</td><td class='desc'>enum 항목 `COL_NN` 선언입니다.</td></tr>
+<tr><td class='line'>25</td><td class='code'>} ColumnType;</td><td class='desc'>ColumnType enum 정의가 끝납니다. 컬럼 제약(COL_PK/COL_UK/COL_NN) 판별에 사용됩니다.</td></tr>
+<tr><td class='line'>26</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>27</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>28</td><td class='code'>    StatementType type;</td><td class='desc'>구조체 `Statement`의 멤버 선언: `StatementType type`. 용도: 이 SQL이 INSERT/SELECT/UPDATE/DELETE 중 어떤 명령인지 저장합니다.</td></tr>
+<tr><td class='line'>29</td><td class='code'>    char table_name[256];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[256] table_name`. 용도: 대상 테이블 이름</td></tr>
+<tr><td class='line'>30</td><td class='code'>    char row_data[1024];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[1024] row_data`. 용도: INSERT에서 VALUES() 안 문자열 전체</td></tr>
+<tr><td class='line'>31</td><td class='code'>    char set_col[50];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[50] set_col`. 용도: UPDATE에서 바꿀 컬럼 이름</td></tr>
+<tr><td class='line'>32</td><td class='code'>    char set_val[256];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[256] set_val`. 용도: UPDATE에서 바꿀 새 값</td></tr>
+<tr><td class='line'>33</td><td class='code'>    char where_col[50];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[50] where_col`. 용도: WHERE에서 비교할 컬럼 이름</td></tr>
+<tr><td class='line'>34</td><td class='code'>    char where_val[256];</td><td class='desc'>구조체 `Statement`의 멤버 선언: `char[256] where_val`. 용도: WHERE에서 비교할 값</td></tr>
+<tr><td class='line'>35</td><td class='code'>} Statement;</td><td class='desc'>`Statement` 구조체 정의가 끝났습니다. 용도: 파서가 한 SQL 문장을 분석해 결과를 담는 구조체입니다.. 이 구조체는 SQL 한 줄의 핵심 정보(type, 대상 테이블, where/set 값)를 담는 상자입니다.</td></tr>
+<tr><td class='line'>36</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>37</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>38</td><td class='code'>    char name[50];</td><td class='desc'>구조체 `ColumnInfo`의 멤버 선언: `char[50] name`. 용도: 컬럼 이름</td></tr>
+<tr><td class='line'>39</td><td class='code'>    ColumnType type;</td><td class='desc'>구조체 `ColumnInfo`의 멤버 선언: `ColumnType type`. 용도: 해당 컬럼 제약 타입</td></tr>
+<tr><td class='line'>40</td><td class='code'>} ColumnInfo;</td><td class='desc'>`ColumnInfo` 구조체 정의가 끝났습니다. 용도: 컬럼 이름과 제약 정보를 묶는 구조체입니다..</td></tr>
+<tr><td class='line'>41</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>42</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>43</td><td class='code'>    char table_name[256];</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `char[256] table_name`. 용도: 테이블 식별용 이름(파일명 기반)</td></tr>
+<tr><td class='line'>44</td><td class='code'>    FILE *file;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>45</td><td class='code'>    ColumnInfo cols[MAX_COLS];</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `ColumnInfo[MAX_COLS] cols`. 용도: 컬럼 메타정보 배열</td></tr>
+<tr><td class='line'>46</td><td class='code'>    int col_count;</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `int col_count`. 용도: 컬럼 개수</td></tr>
+<tr><td class='line'>47</td><td class='code'>    int pk_idx;</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `int pk_idx`. 용도: PK 컬럼 인덱스, 없으면 -1</td></tr>
+<tr><td class='line'>48</td><td class='code'>    int uk_indices[MAX_UKS];</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `int[MAX_UKS] uk_indices`. 용도: UK 컬럼들의 인덱스 목록</td></tr>
+<tr><td class='line'>49</td><td class='code'>    int uk_count;</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `int uk_count`. 용도: UK 컬럼 개수</td></tr>
+<tr><td class='line'>50</td><td class='code'>    long pk_index[MAX_RECORDS];</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `long[MAX_RECORDS] pk_index`. 용도: PK 값 정렬/검색용 인덱스 배열</td></tr>
+<tr><td class='line'>51</td><td class='code'>    char records[MAX_RECORDS][1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>52</td><td class='code'>    int record_count;</td><td class='desc'>구조체 `TableCache`의 멤버 선언: `int record_count`. 용도: 레코드(행) 개수</td></tr>
+<tr><td class='line'>53</td><td class='code'>} TableCache;</td><td class='desc'>`TableCache` 구조체 정의가 끝났습니다. 용도: CSV 파일을 메모리에 캐시해서 반복 사용하기 위한 구조체입니다.. 하위로 메타 정보(테이블/제약), 컬럼 정의, 실제 레코드 저장/인덱스 역할을 묶어 해석하면 됩니다.</td></tr>
+<tr><td class='line'>54</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>55</td><td class='code'>typedef enum {</td><td class='desc'>enum 정의 시작입니다.</td></tr>
+<tr><td class='line'>56</td><td class='code'>    TOKEN_EOF,</td><td class='desc'>enum 항목 `TOKEN_EOF` 선언입니다.</td></tr>
+<tr><td class='line'>57</td><td class='code'>    TOKEN_ILLEGAL,</td><td class='desc'>enum 항목 `TOKEN_ILLEGAL` 선언입니다.</td></tr>
+<tr><td class='line'>58</td><td class='code'>    TOKEN_IDENTIFIER,</td><td class='desc'>enum 항목 `TOKEN_IDENTIFIER` 선언입니다.</td></tr>
+<tr><td class='line'>59</td><td class='code'>    TOKEN_STRING,</td><td class='desc'>enum 항목 `TOKEN_STRING` 선언입니다.</td></tr>
+<tr><td class='line'>60</td><td class='code'>    TOKEN_NUMBER,</td><td class='desc'>enum 항목 `TOKEN_NUMBER` 선언입니다.</td></tr>
+<tr><td class='line'>61</td><td class='code'>    TOKEN_SELECT,</td><td class='desc'>enum 항목 `TOKEN_SELECT` 선언입니다.</td></tr>
+<tr><td class='line'>62</td><td class='code'>    TOKEN_INSERT,</td><td class='desc'>enum 항목 `TOKEN_INSERT` 선언입니다.</td></tr>
+<tr><td class='line'>63</td><td class='code'>    TOKEN_UPDATE,</td><td class='desc'>enum 항목 `TOKEN_UPDATE` 선언입니다.</td></tr>
+<tr><td class='line'>64</td><td class='code'>    TOKEN_DELETE,</td><td class='desc'>enum 항목 `TOKEN_DELETE` 선언입니다.</td></tr>
+<tr><td class='line'>65</td><td class='code'>    TOKEN_FROM,</td><td class='desc'>enum 항목 `TOKEN_FROM` 선언입니다.</td></tr>
+<tr><td class='line'>66</td><td class='code'>    TOKEN_WHERE,</td><td class='desc'>enum 항목 `TOKEN_WHERE` 선언입니다.</td></tr>
+<tr><td class='line'>67</td><td class='code'>    TOKEN_SET,</td><td class='desc'>enum 항목 `TOKEN_SET` 선언입니다.</td></tr>
+<tr><td class='line'>68</td><td class='code'>    TOKEN_INTO,</td><td class='desc'>enum 항목 `TOKEN_INTO` 선언입니다.</td></tr>
+<tr><td class='line'>69</td><td class='code'>    TOKEN_VALUES,</td><td class='desc'>enum 항목 `TOKEN_VALUES` 선언입니다.</td></tr>
+<tr><td class='line'>70</td><td class='code'>    TOKEN_STAR,</td><td class='desc'>enum 항목 `TOKEN_STAR` 선언입니다.</td></tr>
+<tr><td class='line'>71</td><td class='code'>    TOKEN_COMMA,</td><td class='desc'>enum 항목 `TOKEN_COMMA` 선언입니다.</td></tr>
+<tr><td class='line'>72</td><td class='code'>    TOKEN_LPAREN,</td><td class='desc'>enum 항목 `TOKEN_LPAREN` 선언입니다.</td></tr>
+<tr><td class='line'>73</td><td class='code'>    TOKEN_RPAREN,</td><td class='desc'>enum 항목 `TOKEN_RPAREN` 선언입니다.</td></tr>
+<tr><td class='line'>74</td><td class='code'>    TOKEN_EQ,</td><td class='desc'>enum 항목 `TOKEN_EQ` 선언입니다.</td></tr>
+<tr><td class='line'>75</td><td class='code'>    TOKEN_SEMICOLON</td><td class='desc'>enum 항목 `TOKEN_SEMICOLON` 선언입니다.</td></tr>
+<tr><td class='line'>76</td><td class='code'>} TokenType;</td><td class='desc'>TokenType enum 정의가 끝납니다. 어휘 분석 토큰의 종류를 분류합니다.</td></tr>
+<tr><td class='line'>77</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>78</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>79</td><td class='code'>    TokenType type;</td><td class='desc'>구조체 `Token`의 멤버 선언: `TokenType type`. 용도: 현재 토큰의 종류</td></tr>
+<tr><td class='line'>80</td><td class='code'>    char text[256];</td><td class='desc'>구조체 `Token`의 멤버 선언: `char[256] text`. 용도: 현재 토큰 문자열</td></tr>
+<tr><td class='line'>81</td><td class='code'>} Token;</td><td class='desc'>`Token` 구조체 정의가 끝났습니다. 용도: 현재 토큰 종류와 실제 문자열을 담는 구조체입니다..</td></tr>
+<tr><td class='line'>82</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>83</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>84</td><td class='code'>    const char *sql;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>85</td><td class='code'>    int pos;</td><td class='desc'>구조체 `Lexer`의 멤버 선언: `int pos`. 용도: 현재 읽고 있는 인덱스</td></tr>
+<tr><td class='line'>86</td><td class='code'>} Lexer;</td><td class='desc'>`Lexer` 구조체 정의가 끝났습니다. 용도: SQL 문자열에서 현재 위치를 기억하는 어휘 분석 상태를 저장합니다..</td></tr>
+<tr><td class='line'>87</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>88</td><td class='code'>typedef struct {</td><td class='desc'>구조체 정의 시작입니다.</td></tr>
+<tr><td class='line'>89</td><td class='code'>    Lexer lexer;</td><td class='desc'>구조체 `Parser`의 멤버 선언: `Lexer lexer`. 용도: 동작 중인 Lexer 상태</td></tr>
+<tr><td class='line'>90</td><td class='code'>    Token current_token;</td><td class='desc'>구조체 `Parser`의 멤버 선언: `Token current_token`. 용도: 현재 읽은 토큰</td></tr>
+<tr><td class='line'>91</td><td class='code'>} Parser;</td><td class='desc'>`Parser` 구조체 정의가 끝났습니다. 용도: Lexer 상태와 현재 토큰을 묶어서 파싱 상태를 관리합니다..</td></tr>
+<tr><td class='line'>92</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>93</td><td class='code'>extern TableCache open_tables[MAX_TABLES];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>94</td><td class='code'>extern int open_table_count;</td><td class='desc'>변수 선언입니다. `open_table_count`: 현재 열어둔 테이블 개수</td></tr>
+<tr><td class='line'>95</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>96</td><td class='code'>#endif</td><td class='desc'>전처리 지시문입니다.</td></tr>
+</tbody></table></section>
+<section><h2>lexer.h</h2><p class='note'>lexer 함수 선언만 있는 인터페이스 파일입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#ifndef LEXER_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#define LEXER_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &quot;types.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>void init_lexer(Lexer *l, const char *sql);</td><td class='desc'>`init_lexer`: Lexer에 SQL 문자열과 시작 위치를 넣어 파싱 준비를 합니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'>Token get_next_token(Lexer *l);</td><td class='desc'>`get_next_token`: 현재 위치에서 하나의 토큰을 뽑고 다음 위치로 이동합니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>9</td><td class='code'>#endif</td><td class='desc'>전처리 지시문입니다.</td></tr>
+</tbody></table></section>
+<section><h2>parser.h</h2><p class='note'>parser 인터페이스 파일입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#ifndef PARSER_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#define PARSER_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &quot;types.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>int parse_statement(const char *sql, Statement *stmt);</td><td class='desc'>`parse_statement`: SQL 앞 토큰에 따라 적절한 파서 함수로 분기해 처리 결과를 반환합니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>8</td><td class='code'>#endif</td><td class='desc'>전처리 지시문입니다.</td></tr>
+</tbody></table></section>
+<section><h2>executor.h</h2><p class='note'>실행 엔진 함수 선언부입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#ifndef EXECUTOR_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#define EXECUTOR_H</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &quot;types.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>void execute_insert(Statement *stmt);</td><td class='desc'>`execute_insert`: INSERT 검증(예: NN/PK/UK) 후 저장소 갱신을 수행합니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'>void execute_select(Statement *stmt);</td><td class='desc'>`execute_select`: 조건 유무에 따라 전체/필터 조회를 출력합니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'>void execute_update(Statement *stmt);</td><td class='desc'>`execute_update`: WHERE 조건 행을 찾아 set 값으로 갱신하고 저장합니다.</td></tr>
+<tr><td class='line'>9</td><td class='code'>void execute_delete(Statement *stmt);</td><td class='desc'>`execute_delete`: WHERE 조건 행을 삭제하고 남은 행으로 정리해 파일에 반영합니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'>void close_all_tables(void);</td><td class='desc'>`close_all_tables`: 열린 모든 파일 포인터를 닫아 자원 정리를 합니다.</td></tr>
+<tr><td class='line'>11</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>12</td><td class='code'>#endif</td><td class='desc'>전처리 지시문입니다.</td></tr>
+</tbody></table></section>
+<section><h2>lexer.c</h2><p class='note'>SQL을 토큰 단위로 쪼개는 어휘 분석기 구현부입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#include &lt;ctype.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#include &lt;string.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &quot;lexer.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>void init_lexer(Lexer *l, const char *sql) {</td><td class='desc'>함수 `init_lexer` 선언입니다. Lexer에 SQL 문자열과 시작 위치를 넣어 파싱 준비를 합니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'>    l-&gt;sql = sql;</td><td class='desc'>l(변수)의 `sql`에 `sql`를 저장합니다. 이것은 `l` 구조체의 `sql` 항목입니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'>    l-&gt;pos = 0;</td><td class='desc'>l(변수)의 `pos`에 `0`를 저장합니다. 이것은 `l` 구조체의 `pos` 항목입니다.</td></tr>
+<tr><td class='line'>9</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>11</td><td class='code'>Token get_next_token(Lexer *l) {</td><td class='desc'>함수 `get_next_token` 선언입니다. 현재 위치에서 하나의 토큰을 뽑고 다음 위치로 이동합니다.</td></tr>
+<tr><td class='line'>12</td><td class='code'>    Token t = { .type = TOKEN_ILLEGAL, .text = &quot;&quot; };</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>13</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>14</td><td class='code'>    while (l-&gt;sql[l-&gt;pos] &amp;&amp; isspace((unsigned char)l-&gt;sql[l-&gt;pos])) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>15</td><td class='code'>        l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>16</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>17</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>18</td><td class='code'>    if (l-&gt;sql[l-&gt;pos] == &#x27;\0&#x27;) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>19</td><td class='code'>        t.type = TOKEN_EOF;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>20</td><td class='code'>        return t;</td><td class='desc'>함수를 종료하고 `t;`를 반환합니다.</td></tr>
+<tr><td class='line'>21</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>22</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>23</td><td class='code'>    char c = l-&gt;sql[l-&gt;pos];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>24</td><td class='code'>    int start_pos = l-&gt;pos;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>25</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>26</td><td class='code'>    if (strchr(&quot;*,=();&quot;, c)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>27</td><td class='code'>        switch (c) {</td><td class='desc'>switch 분기문 시작입니다.</td></tr>
+<tr><td class='line'>28</td><td class='code'>            case &#x27;*&#x27;: t.type = TOKEN_STAR; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>29</td><td class='code'>            case &#x27;,&#x27;: t.type = TOKEN_COMMA; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>30</td><td class='code'>            case &#x27;=&#x27;: t.type = TOKEN_EQ; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>31</td><td class='code'>            case &#x27;(&#x27;: t.type = TOKEN_LPAREN; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>32</td><td class='code'>            case &#x27;)&#x27;: t.type = TOKEN_RPAREN; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>33</td><td class='code'>            case &#x27;;&#x27;: t.type = TOKEN_SEMICOLON; break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>34</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>35</td><td class='code'>        t.text[0] = c;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>36</td><td class='code'>        t.text[1] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>37</td><td class='code'>        l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>38</td><td class='code'>    } else if (c == &#x27;\&#x27;&#x27;) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>39</td><td class='code'>        l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>40</td><td class='code'>        start_pos = l-&gt;pos;</td><td class='desc'>변수 `start_pos`에 `l-&gt;pos`를 넣습니다. `start_pos`의 용도: 변수</td></tr>
+<tr><td class='line'>41</td><td class='code'>        while (l-&gt;sql[l-&gt;pos] &amp;&amp; l-&gt;sql[l-&gt;pos] != &#x27;\&#x27;&#x27;) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>42</td><td class='code'>            l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>43</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>44</td><td class='code'>        int len = l-&gt;pos - start_pos;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>45</td><td class='code'>        if (len &gt;= (int)sizeof(t.text)) len = (int)sizeof(t.text) - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>46</td><td class='code'>        strncpy(t.text, l-&gt;sql + start_pos, len);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>47</td><td class='code'>        t.text[len] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>48</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>49</td><td class='code'>        if (l-&gt;sql[l-&gt;pos] == &#x27;\&#x27;&#x27;) l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>50</td><td class='code'>        t.type = TOKEN_STRING;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>51</td><td class='code'>    } else if (isalpha((unsigned char)c) || c == &#x27;_&#x27;) {</td><td class='desc'>`isalpha`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>52</td><td class='code'>        while (l-&gt;sql[l-&gt;pos] &amp;&amp;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>53</td><td class='code'>               (isalnum((unsigned char)l-&gt;sql[l-&gt;pos]) || strchr(&quot;_-.&quot;, l-&gt;sql[l-&gt;pos]))) {</td><td class='desc'>`isalnum`: 영문/숫자 판별 / `strchr`: 문자열에서 특정 문자 첫 위치 찾기</td></tr>
+<tr><td class='line'>54</td><td class='code'>            l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>55</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>56</td><td class='code'>        int len = l-&gt;pos - start_pos;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>57</td><td class='code'>        if (len &gt;= (int)sizeof(t.text)) len = (int)sizeof(t.text) - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>58</td><td class='code'>        strncpy(t.text, l-&gt;sql + start_pos, len);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>59</td><td class='code'>        t.text[len] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>60</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>61</td><td class='code'>        char upper_text[256];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>62</td><td class='code'>        for (int i = 0; t.text[i]; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>63</td><td class='code'>            upper_text[i] = toupper((unsigned char)t.text[i]);</td><td class='desc'>`toupper`: 대문자 변환</td></tr>
+<tr><td class='line'>64</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>65</td><td class='code'>        upper_text[strlen(t.text)] = &#x27;\0&#x27;;</td><td class='desc'>`strlen`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>66</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>67</td><td class='code'>        if (strcmp(upper_text, &quot;SELECT&quot;) == 0) t.type = TOKEN_SELECT;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>68</td><td class='code'>        else if (strcmp(upper_text, &quot;INSERT&quot;) == 0) t.type = TOKEN_INSERT;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>69</td><td class='code'>        else if (strcmp(upper_text, &quot;UPDATE&quot;) == 0) t.type = TOKEN_UPDATE;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>70</td><td class='code'>        else if (strcmp(upper_text, &quot;DELETE&quot;) == 0) t.type = TOKEN_DELETE;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>71</td><td class='code'>        else if (strcmp(upper_text, &quot;FROM&quot;) == 0) t.type = TOKEN_FROM;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>72</td><td class='code'>        else if (strcmp(upper_text, &quot;WHERE&quot;) == 0) t.type = TOKEN_WHERE;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>73</td><td class='code'>        else if (strcmp(upper_text, &quot;SET&quot;) == 0) t.type = TOKEN_SET;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>74</td><td class='code'>        else if (strcmp(upper_text, &quot;INTO&quot;) == 0) t.type = TOKEN_INTO;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>75</td><td class='code'>        else if (strcmp(upper_text, &quot;VALUES&quot;) == 0) t.type = TOKEN_VALUES;</td><td class='desc'>`strcmp`: 문자열 전체 비교</td></tr>
+<tr><td class='line'>76</td><td class='code'>        else t.type = TOKEN_IDENTIFIER;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>77</td><td class='code'>    } else if (isdigit((unsigned char)c)) {</td><td class='desc'>`isdigit`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>78</td><td class='code'>        while (l-&gt;sql[l-&gt;pos] &amp;&amp;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>79</td><td class='code'>               (isalnum((unsigned char)l-&gt;sql[l-&gt;pos]) || strchr(&quot;_-.&quot;, l-&gt;sql[l-&gt;pos]))) {</td><td class='desc'>`isalnum`: 영문/숫자 판별 / `strchr`: 문자열에서 특정 문자 첫 위치 찾기</td></tr>
+<tr><td class='line'>80</td><td class='code'>            l-&gt;pos++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>81</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>82</td><td class='code'>        int len = l-&gt;pos - start_pos;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>83</td><td class='code'>        if (len &gt;= (int)sizeof(t.text)) len = (int)sizeof(t.text) - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>84</td><td class='code'>        strncpy(t.text, l-&gt;sql + start_pos, len);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>85</td><td class='code'>        t.text[len] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>86</td><td class='code'>        t.type = TOKEN_NUMBER;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>87</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>88</td><td class='code'>    return t;</td><td class='desc'>함수를 종료하고 `t;`를 반환합니다.</td></tr>
+<tr><td class='line'>89</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+</tbody></table></section>
+<section><h2>parser.c</h2><p class='note'>토큰 목록을 기반으로 Statement를 구성하는 구문 분석기 구현부입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#include &lt;ctype.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#include &lt;string.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &quot;lexer.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'>#include &quot;parser.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>6</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>7</td><td class='code'>void advance_parser(Parser *p) {</td><td class='desc'>함수 `advance_parser` 선언입니다. 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'>    p-&gt;current_token = get_next_token(&amp;p-&gt;lexer);</td><td class='desc'>p(파서 상태 포인터)의 `current_token`에 `get_next_token(&amp;p-&gt;lexer)`를 저장합니다. 이것은 `p` 구조체의 `current_token` 항목입니다.</td></tr>
+<tr><td class='line'>9</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>11</td><td class='code'>static int expect_token(Parser *p, TokenType type) {</td><td class='desc'>함수 `expect_token` 선언입니다. 현재 토큰이 기대한 종류인지 확인하고 통과하면 한 칸 이동합니다.</td></tr>
+<tr><td class='line'>12</td><td class='code'>    if (p-&gt;current_token.type == type) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>13</td><td class='code'>        advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>14</td><td class='code'>        return 1;</td><td class='desc'>함수를 종료하고 `1;`를 반환합니다.</td></tr>
+<tr><td class='line'>15</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>16</td><td class='code'>    return 0;</td><td class='desc'>함수를 종료하고 `0;`를 반환합니다.</td></tr>
+<tr><td class='line'>17</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>18</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>19</td><td class='code'>static int parse_where_clause(Parser *p, Statement *stmt) {</td><td class='desc'>함수 `parse_where_clause` 선언입니다. WHERE col = value 형태를 읽어 Statement에 where 정보 저장을 시도합니다.</td></tr>
+<tr><td class='line'>20</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_WHERE) return 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>21</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>22</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>23</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>24</td><td class='code'>    strncpy(stmt-&gt;where_col, p-&gt;current_token.text, sizeof(stmt-&gt;where_col) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>25</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>26</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>27</td><td class='code'>    if (!expect_token(p, TOKEN_EQ)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>28</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>29</td><td class='code'>    if (p-&gt;current_token.type == TOKEN_STRING ||</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>30</td><td class='code'>        p-&gt;current_token.type == TOKEN_NUMBER ||</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>31</td><td class='code'>        p-&gt;current_token.type == TOKEN_IDENTIFIER) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>32</td><td class='code'>        strncpy(stmt-&gt;where_val, p-&gt;current_token.text, sizeof(stmt-&gt;where_val) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>33</td><td class='code'>        advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>34</td><td class='code'>    } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>35</td><td class='code'>        return 0;</td><td class='desc'>함수를 종료하고 `0;`를 반환합니다.</td></tr>
+<tr><td class='line'>36</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>37</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>38</td><td class='code'>    return 1;</td><td class='desc'>함수를 종료하고 `1;`를 반환합니다.</td></tr>
+<tr><td class='line'>39</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>40</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>41</td><td class='code'>static int parse_select(Parser *p, Statement *stmt) {</td><td class='desc'>함수 `parse_select` 선언입니다. SELECT 구문을 해석해 table_name과 where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>42</td><td class='code'>    stmt-&gt;type = STMT_SELECT;</td><td class='desc'>stmt(현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터)의 `type`에 `STMT_SELECT`를 저장합니다. 이것은 `stmt` 구조체의 `type` 항목입니다.</td></tr>
+<tr><td class='line'>43</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>44</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>45</td><td class='code'>    if (!expect_token(p, TOKEN_STAR)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>46</td><td class='code'>    if (!expect_token(p, TOKEN_FROM)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>47</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>48</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>49</td><td class='code'>    strncpy(stmt-&gt;table_name, p-&gt;current_token.text, sizeof(stmt-&gt;table_name) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>50</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>51</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>52</td><td class='code'>    return parse_where_clause(p, stmt);</td><td class='desc'>함수를 종료하고 `parse_where_clause(p, stmt);`를 반환합니다.</td></tr>
+<tr><td class='line'>53</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>54</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>55</td><td class='code'>static int parse_insert(Parser *p, Statement *stmt) {</td><td class='desc'>함수 `parse_insert` 선언입니다. INSERT 구문을 해석해 table_name과 row_data를 채웁니다.</td></tr>
+<tr><td class='line'>56</td><td class='code'>    stmt-&gt;type = STMT_INSERT;</td><td class='desc'>stmt(현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터)의 `type`에 `STMT_INSERT`를 저장합니다. 이것은 `stmt` 구조체의 `type` 항목입니다.</td></tr>
+<tr><td class='line'>57</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>58</td><td class='code'>    const char *open_paren;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>59</td><td class='code'>    const char *close_paren;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>60</td><td class='code'>    int len;</td><td class='desc'>변수 선언입니다. `len`: int 형식 변수</td></tr>
+<tr><td class='line'>61</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>62</td><td class='code'>    if (!expect_token(p, TOKEN_INTO)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>63</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>64</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>65</td><td class='code'>    strncpy(stmt-&gt;table_name, p-&gt;current_token.text, sizeof(stmt-&gt;table_name) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>66</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>67</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>68</td><td class='code'>    if (!expect_token(p, TOKEN_VALUES)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>69</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_LPAREN) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>70</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>71</td><td class='code'>    open_paren = strchr(p-&gt;lexer.sql, &#x27;(&#x27;);</td><td class='desc'>변수 `open_paren`에 `strchr(p-&gt;lexer.sql, &#x27;(&#x27;)`를 넣습니다. `open_paren`의 용도: 변수</td></tr>
+<tr><td class='line'>72</td><td class='code'>    close_paren = strrchr(p-&gt;lexer.sql, &#x27;)&#x27;);</td><td class='desc'>변수 `close_paren`에 `strrchr(p-&gt;lexer.sql, &#x27;)&#x27;)`를 넣습니다. `close_paren`의 용도: 변수</td></tr>
+<tr><td class='line'>73</td><td class='code'>    if (!open_paren || !close_paren || close_paren &lt;= open_paren) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>74</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>75</td><td class='code'>    len = (int)(close_paren - open_paren - 1);</td><td class='desc'>변수 `len`에 `(int)(close_paren - open_paren - 1)`를 넣습니다. `len`의 용도: int 형식 변수</td></tr>
+<tr><td class='line'>76</td><td class='code'>    if (len &gt;= (int)sizeof(stmt-&gt;row_data)) len = (int)sizeof(stmt-&gt;row_data) - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>77</td><td class='code'>    strncpy(stmt-&gt;row_data, open_paren + 1, len);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>78</td><td class='code'>    stmt-&gt;row_data[len] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>79</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>80</td><td class='code'>    return 1;</td><td class='desc'>함수를 종료하고 `1;`를 반환합니다.</td></tr>
+<tr><td class='line'>81</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>82</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>83</td><td class='code'>static int parse_update(Parser *p, Statement *stmt) {</td><td class='desc'>함수 `parse_update` 선언입니다. UPDATE 구문을 해석해 table_name, set 대상, set 값, where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>84</td><td class='code'>    stmt-&gt;type = STMT_UPDATE;</td><td class='desc'>stmt(현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터)의 `type`에 `STMT_UPDATE`를 저장합니다. 이것은 `stmt` 구조체의 `type` 항목입니다.</td></tr>
+<tr><td class='line'>85</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>86</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>87</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>88</td><td class='code'>    strncpy(stmt-&gt;table_name, p-&gt;current_token.text, sizeof(stmt-&gt;table_name) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>89</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>90</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>91</td><td class='code'>    if (!expect_token(p, TOKEN_SET)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>92</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>93</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>94</td><td class='code'>    strncpy(stmt-&gt;set_col, p-&gt;current_token.text, sizeof(stmt-&gt;set_col) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>95</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>96</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>97</td><td class='code'>    if (!expect_token(p, TOKEN_EQ)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>98</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>99</td><td class='code'>    if (p-&gt;current_token.type == TOKEN_STRING ||</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>100</td><td class='code'>        p-&gt;current_token.type == TOKEN_NUMBER ||</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>101</td><td class='code'>        p-&gt;current_token.type == TOKEN_IDENTIFIER) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>102</td><td class='code'>        strncpy(stmt-&gt;set_val, p-&gt;current_token.text, sizeof(stmt-&gt;set_val) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>103</td><td class='code'>        advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>104</td><td class='code'>    } else return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>105</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>106</td><td class='code'>    return parse_where_clause(p, stmt);</td><td class='desc'>함수를 종료하고 `parse_where_clause(p, stmt);`를 반환합니다.</td></tr>
+<tr><td class='line'>107</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>108</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>109</td><td class='code'>static int parse_delete(Parser *p, Statement *stmt) {</td><td class='desc'>함수 `parse_delete` 선언입니다. DELETE 구문을 해석해 table_name, where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>110</td><td class='code'>    stmt-&gt;type = STMT_DELETE;</td><td class='desc'>stmt(현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터)의 `type`에 `STMT_DELETE`를 저장합니다. 이것은 `stmt` 구조체의 `type` 항목입니다.</td></tr>
+<tr><td class='line'>111</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>112</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>113</td><td class='code'>    if (!expect_token(p, TOKEN_FROM)) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>114</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>115</td><td class='code'>    if (p-&gt;current_token.type != TOKEN_IDENTIFIER) return 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>116</td><td class='code'>    strncpy(stmt-&gt;table_name, p-&gt;current_token.text, sizeof(stmt-&gt;table_name) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>117</td><td class='code'>    advance_parser(p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>118</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>119</td><td class='code'>    return parse_where_clause(p, stmt);</td><td class='desc'>함수를 종료하고 `parse_where_clause(p, stmt);`를 반환합니다.</td></tr>
+<tr><td class='line'>120</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>121</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>122</td><td class='code'>int parse_statement(const char *sql, Statement *stmt) {</td><td class='desc'>함수 `parse_statement` 선언입니다. SQL 앞 토큰에 따라 적절한 파서 함수로 분기해 처리 결과를 반환합니다.</td></tr>
+<tr><td class='line'>123</td><td class='code'>    memset(stmt, 0, sizeof(Statement));</td><td class='desc'>`memset`: 메모리 초기화 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>124</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>125</td><td class='code'>    Parser p;</td><td class='desc'>변수 선언입니다. `p`: 파서 상태 포인터</td></tr>
+<tr><td class='line'>126</td><td class='code'>    init_lexer(&amp;p.lexer, sql);</td><td class='desc'>`init_lexer`: Lexer에 SQL 문자열과 시작 위치를 넣어 파싱 준비를 합니다.</td></tr>
+<tr><td class='line'>127</td><td class='code'>    advance_parser(&amp;p);</td><td class='desc'>`advance_parser`: 파서의 current_token을 다음 토큰으로 갱신합니다.</td></tr>
+<tr><td class='line'>128</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>129</td><td class='code'>    switch (p.current_token.type) {</td><td class='desc'>switch 분기문 시작입니다.</td></tr>
+<tr><td class='line'>130</td><td class='code'>        case TOKEN_SELECT: return parse_select(&amp;p, stmt);</td><td class='desc'>`parse_select`: SELECT 구문을 해석해 table_name과 where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>131</td><td class='code'>        case TOKEN_INSERT: return parse_insert(&amp;p, stmt);</td><td class='desc'>`parse_insert`: INSERT 구문을 해석해 table_name과 row_data를 채웁니다.</td></tr>
+<tr><td class='line'>132</td><td class='code'>        case TOKEN_UPDATE: return parse_update(&amp;p, stmt);</td><td class='desc'>`parse_update`: UPDATE 구문을 해석해 table_name, set 대상, set 값, where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>133</td><td class='code'>        case TOKEN_DELETE: return parse_delete(&amp;p, stmt);</td><td class='desc'>`parse_delete`: DELETE 구문을 해석해 table_name, where 조건을 채웁니다.</td></tr>
+<tr><td class='line'>134</td><td class='code'>        default:</td><td class='desc'>switch의 기본(default) 분기를 처리합니다.</td></tr>
+<tr><td class='line'>135</td><td class='code'>            stmt-&gt;type = STMT_UNRECOGNIZED;</td><td class='desc'>stmt(현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터)의 `type`에 `STMT_UNRECOGNIZED`를 저장합니다. 이것은 `stmt` 구조체의 `type` 항목입니다.</td></tr>
+<tr><td class='line'>136</td><td class='code'>            return 0;</td><td class='desc'>함수를 종료하고 `0;`를 반환합니다.</td></tr>
+<tr><td class='line'>137</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>138</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+</tbody></table></section>
+<section><h2>executor.c</h2><p class='note'>테이블 캐시 관리, 제약 검사, 삽입/조회/갱신/삭제 실행부입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#include &lt;stdio.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#include &lt;stdlib.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'>#include &lt;string.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>4</td><td class='code'>#include &lt;ctype.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>5</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>6</td><td class='code'>#include &quot;executor.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>8</td><td class='code'>TableCache open_tables[MAX_TABLES];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>9</td><td class='code'>int open_table_count = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>11</td><td class='code'>static int compare_long(const void *a, const void *b) {</td><td class='desc'>함수 `compare_long` 선언입니다. 두 long 값 크기 비교를 리턴합니다.</td></tr>
+<tr><td class='line'>12</td><td class='code'>    long val_a = *(long *)a;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>13</td><td class='code'>    long val_b = *(long *)b;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>14</td><td class='code'>    return (val_a &gt; val_b) - (val_a &lt; val_b);</td><td class='desc'>함수를 종료하고 `(val_a &gt; val_b) - (val_a &lt; val_b);`를 반환합니다.</td></tr>
+<tr><td class='line'>15</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>16</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>17</td><td class='code'>static int find_in_pk_index(TableCache *tc, long val) {</td><td class='desc'>함수 `find_in_pk_index` 선언입니다. 정렬된 PK 배열에서 값 존재 여부를 이분 탐색으로 찾습니다.</td></tr>
+<tr><td class='line'>18</td><td class='code'>    if (tc-&gt;record_count == 0 || tc-&gt;pk_idx == -1) return -1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>19</td><td class='code'>    long *found = bsearch(&amp;val, tc-&gt;pk_index, tc-&gt;record_count, sizeof(long), compare_long);</td><td class='desc'>`bsearch`: 정렬 배열 이분탐색 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>20</td><td class='code'>    return found ? (int)(found - tc-&gt;pk_index) : -1;</td><td class='desc'>함수를 종료하고 `found ? (int)(found - tc-&gt;pk_index) : -1;`를 반환합니다.</td></tr>
+<tr><td class='line'>21</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>22</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>23</td><td class='code'>void trim_and_unquote(char *str) {</td><td class='desc'>함수 `trim_and_unquote` 선언입니다. 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>24</td><td class='code'>    if (!str) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>25</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>26</td><td class='code'>    char *start = str;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>27</td><td class='code'>    while (isspace((unsigned char)*start)) start++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>28</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>29</td><td class='code'>    char *end = start + strlen(start) - 1;</td><td class='desc'>`strlen`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>30</td><td class='code'>    while (end &gt; start &amp;&amp; isspace((unsigned char)*end)) end--;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>31</td><td class='code'>    *(end + 1) = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>32</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>33</td><td class='code'>    if (start[0] == &#x27;\&#x27;&#x27; &amp;&amp; end &gt; start &amp;&amp; *end == &#x27;\&#x27;&#x27;) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>34</td><td class='code'>        start++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>35</td><td class='code'>        *end = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>36</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>37</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>38</td><td class='code'>    if (start != str) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>39</td><td class='code'>        memmove(str, start, strlen(start) + 1);</td><td class='desc'>`memmove`: 메모리 블록 이동 / `strlen`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>40</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>41</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>42</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>43</td><td class='code'>int compare_value(const char *field, const char *search_val) {</td><td class='desc'>함수 `compare_value` 선언입니다. 두 값의 문자열을 정규화한 뒤 동등 비교 결과를 반환합니다.</td></tr>
+<tr><td class='line'>44</td><td class='code'>    char f_buf[256];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>45</td><td class='code'>    char v_buf[256];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>46</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>47</td><td class='code'>    strncpy(f_buf, field ? field : &quot;&quot;, 255);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>48</td><td class='code'>    f_buf[255] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>49</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>50</td><td class='code'>    strncpy(v_buf, search_val ? search_val : &quot;&quot;, 255);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>51</td><td class='code'>    v_buf[255] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>52</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>53</td><td class='code'>    trim_and_unquote(f_buf);</td><td class='desc'>`trim_and_unquote`: 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>54</td><td class='code'>    trim_and_unquote(v_buf);</td><td class='desc'>`trim_and_unquote`: 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>55</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>56</td><td class='code'>    return strcmp(f_buf, v_buf) == 0;</td><td class='desc'>함수를 종료하고 `strcmp(f_buf, v_buf) == 0;`를 반환합니다.</td></tr>
+<tr><td class='line'>57</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>58</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>59</td><td class='code'>void parse_csv_row(const char *row, char *fields[MAX_COLS], char *buffer) {</td><td class='desc'>함수 `parse_csv_row` 선언입니다. CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>60</td><td class='code'>    strncpy(buffer, row, 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>61</td><td class='code'>    buffer[1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>62</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>63</td><td class='code'>    int i = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>64</td><td class='code'>    int in_quotes = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>65</td><td class='code'>    char *p = buffer;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>66</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>67</td><td class='code'>    fields[i++] = p;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>68</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>69</td><td class='code'>    while (*p &amp;&amp; i &lt; MAX_COLS) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>70</td><td class='code'>        if (*p == &#x27;\&#x27;&#x27;) in_quotes = !in_quotes;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>71</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>72</td><td class='code'>        if (*p == &#x27;,&#x27; &amp;&amp; !in_quotes) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>73</td><td class='code'>            *p = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>74</td><td class='code'>            fields[i++] = p + 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>75</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>76</td><td class='code'>        p++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>77</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>78</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>79</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>80</td><td class='code'>static int get_col_idx(TableCache *tc, const char *col_name) {</td><td class='desc'>함수 `get_col_idx` 선언입니다. 컬럼 이름으로 컬럼 인덱스를 찾습니다.</td></tr>
+<tr><td class='line'>81</td><td class='code'>    if (!col_name || strlen(col_name) == 0) return -1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>82</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;col_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>83</td><td class='code'>        if (strcmp(tc-&gt;cols[i].name, col_name) == 0) return i;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>84</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>85</td><td class='code'>    return -1;</td><td class='desc'>함수를 종료하고 `-1;`를 반환합니다.</td></tr>
+<tr><td class='line'>86</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>87</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>88</td><td class='code'>void rewrite_file(TableCache *tc) {</td><td class='desc'>함수 `rewrite_file` 선언입니다. 캐시 상태를 전체 CSV 파일에 다시 기록합니다.</td></tr>
+<tr><td class='line'>89</td><td class='code'>    if (tc-&gt;file) fclose(tc-&gt;file);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>90</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>91</td><td class='code'>    char filename[300];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>92</td><td class='code'>    snprintf(filename, sizeof(filename), &quot;%s.csv&quot;, tc-&gt;table_name);</td><td class='desc'>`snprintf`: 크기 제한 문자열 생성 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>93</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>94</td><td class='code'>    tc-&gt;file = fopen(filename, &quot;w+&quot;);</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `file`에 `fopen(filename, &quot;w+&quot;)`를 저장합니다. 이것은 `tc` 구조체의 `file` 항목입니다.</td></tr>
+<tr><td class='line'>95</td><td class='code'>    if (!tc-&gt;file) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>96</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>97</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;col_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>98</td><td class='code'>        fprintf(tc-&gt;file, &quot;%s&quot;, tc-&gt;cols[i].name);</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>99</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>100</td><td class='code'>        if (tc-&gt;cols[i].type == COL_PK) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>101</td><td class='code'>            fprintf(tc-&gt;file, &quot;(PK)&quot;);</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>102</td><td class='code'>        } else if (tc-&gt;cols[i].type == COL_UK) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>103</td><td class='code'>            fprintf(tc-&gt;file, &quot;(UK)&quot;);</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>104</td><td class='code'>        } else if (tc-&gt;cols[i].type == COL_NN) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>105</td><td class='code'>            fprintf(tc-&gt;file, &quot;(NN)&quot;);</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>106</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>107</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>108</td><td class='code'>        fprintf(tc-&gt;file, &quot;%s&quot;, (i == tc-&gt;col_count - 1 ? &quot;\n&quot; : &quot;,&quot;));</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>109</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>110</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>111</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;record_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>112</td><td class='code'>        fprintf(tc-&gt;file, &quot;%s\n&quot;, tc-&gt;records[i]);</td><td class='desc'>`fprintf`: 파일에 형식 문자열 출력</td></tr>
+<tr><td class='line'>113</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>114</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>115</td><td class='code'>    fflush(tc-&gt;file);</td><td class='desc'>`fflush`: 버퍼 출력 강제 반영</td></tr>
+<tr><td class='line'>116</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>117</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>118</td><td class='code'>void insert_pk_sorted(TableCache *tc, long val, const char* row_str) {</td><td class='desc'>함수 `insert_pk_sorted` 선언입니다. PK 정렬 순서를 유지하며 레코드를 삽입합니다.</td></tr>
+<tr><td class='line'>119</td><td class='code'>    if (tc-&gt;pk_idx == -1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>120</td><td class='code'>        strncpy(tc-&gt;records[tc-&gt;record_count], row_str, 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>121</td><td class='code'>        tc-&gt;records[tc-&gt;record_count][1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>122</td><td class='code'>        return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>123</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>124</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>125</td><td class='code'>    int i = tc-&gt;record_count - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>126</td><td class='code'>    while (i &gt;= 0 &amp;&amp; tc-&gt;pk_index[i] &gt; val) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>127</td><td class='code'>        tc-&gt;pk_index[i + 1] = tc-&gt;pk_index[i];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>128</td><td class='code'>        strncpy(tc-&gt;records[i + 1], tc-&gt;records[i], 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>129</td><td class='code'>        tc-&gt;records[i + 1][1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>130</td><td class='code'>        i--;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>131</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>132</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>133</td><td class='code'>    tc-&gt;pk_index[i + 1] = val;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>134</td><td class='code'>    strncpy(tc-&gt;records[i + 1], row_str, 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>135</td><td class='code'>    tc-&gt;records[i + 1][1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>136</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>137</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>138</td><td class='code'>TableCache* get_table(const char* name) {</td><td class='desc'>함수 `get_table` 선언입니다. 테이블 캐시를 찾고 없으면 파일에서 헤더/레코드를 읽어 새로 생성합니다.</td></tr>
+<tr><td class='line'>139</td><td class='code'>    for (int i = 0; i &lt; open_table_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>140</td><td class='code'>        if (strcmp(open_tables[i].table_name, name) == 0) return &amp;open_tables[i];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>141</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>142</td><td class='code'>    if (open_table_count &gt;= MAX_TABLES) return NULL;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>143</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>144</td><td class='code'>    char filename[300];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>145</td><td class='code'>    snprintf(filename, sizeof(filename), &quot;%s.csv&quot;, name);</td><td class='desc'>`snprintf`: 크기 제한 문자열 생성 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>146</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>147</td><td class='code'>    FILE *f = fopen(filename, &quot;r+&quot;);</td><td class='desc'>`fopen`: 표준 파일 열기</td></tr>
+<tr><td class='line'>148</td><td class='code'>    if (!f) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>149</td><td class='code'>        printf(&quot;[에러] &#x27;%s.csv&#x27; 파일을 열 수 없습니다.\n&quot;, name);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>150</td><td class='code'>        return NULL;</td><td class='desc'>함수를 종료하고 `NULL;`를 반환합니다.</td></tr>
+<tr><td class='line'>151</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>152</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>153</td><td class='code'>    TableCache *tc = &amp;open_tables[open_table_count++];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>154</td><td class='code'>    strncpy(tc-&gt;table_name, name, 255);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>155</td><td class='code'>    tc-&gt;table_name[255] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>156</td><td class='code'>    tc-&gt;file = f;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `file`에 `f`를 저장합니다. 이것은 `tc` 구조체의 `file` 항목입니다.</td></tr>
+<tr><td class='line'>157</td><td class='code'>    tc-&gt;record_count = 0;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `record_count`에 `0`를 저장합니다. 이것은 `tc` 구조체의 `record_count` 항목입니다.</td></tr>
+<tr><td class='line'>158</td><td class='code'>    tc-&gt;pk_idx = -1;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `pk_idx`에 `-1`를 저장합니다. 이것은 `tc` 구조체의 `pk_idx` 항목입니다.</td></tr>
+<tr><td class='line'>159</td><td class='code'>    tc-&gt;col_count = 0;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `col_count`에 `0`를 저장합니다. 이것은 `tc` 구조체의 `col_count` 항목입니다.</td></tr>
+<tr><td class='line'>160</td><td class='code'>    tc-&gt;uk_count = 0;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `uk_count`에 `0`를 저장합니다. 이것은 `tc` 구조체의 `uk_count` 항목입니다.</td></tr>
+<tr><td class='line'>161</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>162</td><td class='code'>    char header[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>163</td><td class='code'>    if (fgets(header, sizeof(header), f)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>164</td><td class='code'>        char *token = strtok(header, &quot;,\n\r&quot;);</td><td class='desc'>`strtok`: 문자열 토큰 분리</td></tr>
+<tr><td class='line'>165</td><td class='code'>        int idx = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>166</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>167</td><td class='code'>        while (token &amp;&amp; idx &lt; MAX_COLS) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>168</td><td class='code'>            char *paren = strchr(token, &#x27;(&#x27;);</td><td class='desc'>`strchr`: 문자열에서 특정 문자 첫 위치 찾기</td></tr>
+<tr><td class='line'>169</td><td class='code'>            if (paren) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>170</td><td class='code'>                int len = (int)(paren - token);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>171</td><td class='code'>                if (len &gt;= (int)sizeof(tc-&gt;cols[idx].name)) len = (int)sizeof(tc-&gt;cols[idx].name) - 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>172</td><td class='code'>                strncpy(tc-&gt;cols[idx].name, token, len);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>173</td><td class='code'>                tc-&gt;cols[idx].name[len] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>174</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>175</td><td class='code'>                if (strstr(paren, &quot;(PK)&quot;)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>176</td><td class='code'>                    tc-&gt;cols[idx].type = COL_PK;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>177</td><td class='code'>                    tc-&gt;pk_idx = idx;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `pk_idx`에 `idx`를 저장합니다. 이것은 `tc` 구조체의 `pk_idx` 항목입니다.</td></tr>
+<tr><td class='line'>178</td><td class='code'>                } else if (strstr(paren, &quot;(UK)&quot;)) {</td><td class='desc'>`strstr`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>179</td><td class='code'>                    tc-&gt;cols[idx].type = COL_UK;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>180</td><td class='code'>                    if (tc-&gt;uk_count &lt; MAX_UKS) tc-&gt;uk_indices[tc-&gt;uk_count++] = idx;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>181</td><td class='code'>                } else if (strstr(paren, &quot;(NN)&quot;)) {</td><td class='desc'>`strstr`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>182</td><td class='code'>                    tc-&gt;cols[idx].type = COL_NN;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>183</td><td class='code'>                } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>184</td><td class='code'>                    tc-&gt;cols[idx].type = COL_NORMAL;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>185</td><td class='code'>                }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>186</td><td class='code'>            } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>187</td><td class='code'>                strncpy(tc-&gt;cols[idx].name, token, sizeof(tc-&gt;cols[idx].name) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>188</td><td class='code'>                tc-&gt;cols[idx].name[sizeof(tc-&gt;cols[idx].name) - 1] = &#x27;\0&#x27;;</td><td class='desc'>`sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>189</td><td class='code'>                tc-&gt;cols[idx].type = COL_NORMAL;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>190</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>191</td><td class='code'>            token = strtok(NULL, &quot;,\n\r&quot;);</td><td class='desc'>변수 `token`에 `strtok(NULL, &quot;,\n\r&quot;)`를 넣습니다. `token`의 용도: 현재 토큰</td></tr>
+<tr><td class='line'>192</td><td class='code'>            idx++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>193</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>194</td><td class='code'>        tc-&gt;col_count = idx;</td><td class='desc'>tc(현재 작업 중인 테이블 캐시 포인터)의 `col_count`에 `idx`를 저장합니다. 이것은 `tc` 구조체의 `col_count` 항목입니다.</td></tr>
+<tr><td class='line'>195</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>196</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>197</td><td class='code'>    char line[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>198</td><td class='code'>    while (fgets(line, sizeof(line), f)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>199</td><td class='code'>        char buffer[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>200</td><td class='code'>        char *fields[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>201</td><td class='code'>        parse_csv_row(line, fields, buffer);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>202</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>203</td><td class='code'>        long cp = (tc-&gt;pk_idx != -1 &amp;&amp; fields[tc-&gt;pk_idx]) ? atol(fields[tc-&gt;pk_idx]) : 0;</td><td class='desc'>`atol`: 문자열을 long으로 변환</td></tr>
+<tr><td class='line'>204</td><td class='code'>        char *nl = strpbrk(line, &quot;\r\n&quot;);</td><td class='desc'>`strpbrk`: 문자열에서 특정 문자 집합 검색</td></tr>
+<tr><td class='line'>205</td><td class='code'>        if (nl) *nl = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>206</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>207</td><td class='code'>        insert_pk_sorted(tc, cp, line);</td><td class='desc'>`insert_pk_sorted`: PK 정렬 순서를 유지하며 레코드를 삽입합니다.</td></tr>
+<tr><td class='line'>208</td><td class='code'>        tc-&gt;record_count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>209</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>210</td><td class='code'>    return tc;</td><td class='desc'>함수를 종료하고 `tc;`를 반환합니다.</td></tr>
+<tr><td class='line'>211</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>212</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>213</td><td class='code'>void execute_insert(Statement *stmt) {</td><td class='desc'>함수 `execute_insert` 선언입니다. INSERT 검증(예: NN/PK/UK) 후 저장소 갱신을 수행합니다.</td></tr>
+<tr><td class='line'>214</td><td class='code'>    TableCache *tc = get_table(stmt-&gt;table_name);</td><td class='desc'>`get_table`: 테이블 캐시를 찾고 없으면 파일에서 헤더/레코드를 읽어 새로 생성합니다.</td></tr>
+<tr><td class='line'>215</td><td class='code'>    if (!tc) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>216</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>217</td><td class='code'>    char buffer[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>218</td><td class='code'>    char *vals[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>219</td><td class='code'>    parse_csv_row(stmt-&gt;row_data, vals, buffer);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>220</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>221</td><td class='code'>    int val_count = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>222</td><td class='code'>    while (vals[val_count] &amp;&amp; val_count &lt; MAX_COLS) val_count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>223</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>224</td><td class='code'>    long new_id = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>225</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>226</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;col_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>227</td><td class='code'>        char *val = (i &lt; val_count &amp;&amp; vals[i]) ? vals[i] : &quot;&quot;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>228</td><td class='code'>        char normalized_val[256];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>229</td><td class='code'>        strncpy(normalized_val, val, sizeof(normalized_val) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>230</td><td class='code'>        normalized_val[sizeof(normalized_val) - 1] = &#x27;\0&#x27;;</td><td class='desc'>`sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>231</td><td class='code'>        trim_and_unquote(normalized_val);</td><td class='desc'>`trim_and_unquote`: 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>232</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>233</td><td class='code'>        if (tc-&gt;cols[i].type == COL_NN &amp;&amp; strlen(normalized_val) == 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>234</td><td class='code'>            printf(&quot;[오류] INSERT 실패: &#x27;%s&#x27; (NN 제약).\n&quot;, tc-&gt;cols[i].name);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>235</td><td class='code'>            return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>236</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>237</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>238</td><td class='code'>        if (i == tc-&gt;pk_idx &amp;&amp; strlen(normalized_val) &gt; 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>239</td><td class='code'>            new_id = atol(normalized_val);</td><td class='desc'>변수 `new_id`에 `atol(normalized_val)`를 넣습니다. `new_id`의 용도: 새로 들어올 PK 값</td></tr>
+<tr><td class='line'>240</td><td class='code'>            if (find_in_pk_index(tc, new_id) != -1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>241</td><td class='code'>                printf(&quot;[오류] PK 중복: %ld\n&quot;, new_id);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>242</td><td class='code'>                return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>243</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>244</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>245</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>246</td><td class='code'>        if (tc-&gt;cols[i].type == COL_UK &amp;&amp; strlen(normalized_val) &gt; 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>247</td><td class='code'>            for (int r = 0; r &lt; tc-&gt;record_count; r++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>248</td><td class='code'>                char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>249</td><td class='code'>                char *f[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>250</td><td class='code'>                parse_csv_row(tc-&gt;records[r], f, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>251</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>252</td><td class='code'>                if (compare_value(f[i], normalized_val)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>253</td><td class='code'>                    printf(&quot;[오류] INSERT 실패: &#x27;%s&#x27; 중복 (UK 제약).\n&quot;, normalized_val);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>254</td><td class='code'>                    return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>255</td><td class='code'>                }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>256</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>257</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>258</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>259</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>260</td><td class='code'>    char new_line[1024] = &quot;&quot;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>261</td><td class='code'>    size_t offset = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>262</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>263</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;col_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>264</td><td class='code'>        const char *v = (i &lt; val_count &amp;&amp; vals[i]) ? vals[i] : ((tc-&gt;cols[i].type == COL_NN) ? &quot;&quot; : &quot;NULL&quot;);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>265</td><td class='code'>        char normalized_storage_val[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>266</td><td class='code'>        char formatted_val[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>267</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>268</td><td class='code'>        strncpy(normalized_storage_val, v, sizeof(normalized_storage_val) - 1);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>269</td><td class='code'>        normalized_storage_val[sizeof(normalized_storage_val) - 1] = &#x27;\0&#x27;;</td><td class='desc'>`sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>270</td><td class='code'>        trim_and_unquote(normalized_storage_val);</td><td class='desc'>`trim_and_unquote`: 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>271</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>272</td><td class='code'>        if (strchr(normalized_storage_val, &#x27;,&#x27;)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>273</td><td class='code'>            snprintf(formatted_val, sizeof(formatted_val), &quot;&#x27;%.*s&#x27;&quot;, (int)(sizeof(formatted_val) - 3), normalized_storage_val);</td><td class='desc'>`snprintf`: 크기 제한 문자열 생성 / `sizeof`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>274</td><td class='code'>            v = formatted_val;</td><td class='desc'>변수 `v`에 `formatted_val`를 넣습니다. `v`의 용도: 변수</td></tr>
+<tr><td class='line'>275</td><td class='code'>        } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>276</td><td class='code'>            v = normalized_storage_val;</td><td class='desc'>변수 `v`에 `normalized_storage_val`를 넣습니다. `v`의 용도: 변수</td></tr>
+<tr><td class='line'>277</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>278</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>279</td><td class='code'>        int w = snprintf(new_line + offset, sizeof(new_line) - offset, &quot;%s%s&quot;, v, (i &lt; tc-&gt;col_count - 1) ? &quot;,&quot; : &quot;&quot;);</td><td class='desc'>변수 선언입니다. `v`: int w 형식 변수</td></tr>
+<tr><td class='line'>280</td><td class='code'>        if (w &lt; 0 || (size_t)w &gt;= sizeof(new_line) - offset) break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>281</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>282</td><td class='code'>        offset += w;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>283</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>284</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>285</td><td class='code'>    insert_pk_sorted(tc, new_id, new_line);</td><td class='desc'>`insert_pk_sorted`: PK 정렬 순서를 유지하며 레코드를 삽입합니다.</td></tr>
+<tr><td class='line'>286</td><td class='code'>    tc-&gt;record_count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>287</td><td class='code'>    rewrite_file(tc);</td><td class='desc'>`rewrite_file`: 캐시 상태를 전체 CSV 파일에 다시 기록합니다.</td></tr>
+<tr><td class='line'>288</td><td class='code'>    printf(&quot;[완료] 데이터 1건 삽입됨\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>289</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>290</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>291</td><td class='code'>void execute_select(Statement *stmt) {</td><td class='desc'>함수 `execute_select` 선언입니다. 조건 유무에 따라 전체/필터 조회를 출력합니다.</td></tr>
+<tr><td class='line'>292</td><td class='code'>    TableCache *tc = get_table(stmt-&gt;table_name);</td><td class='desc'>`get_table`: 테이블 캐시를 찾고 없으면 파일에서 헤더/레코드를 읽어 새로 생성합니다.</td></tr>
+<tr><td class='line'>293</td><td class='code'>    if (!tc) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>294</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>295</td><td class='code'>    int where_idx = get_col_idx(tc, stmt-&gt;where_col);</td><td class='desc'>`get_col_idx`: 컬럼 이름으로 컬럼 인덱스를 찾습니다.</td></tr>
+<tr><td class='line'>296</td><td class='code'>    printf(&quot;\n--- [%s] 조회 결과 ---\n&quot;, tc-&gt;table_name);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>297</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>298</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;record_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>299</td><td class='code'>        if (where_idx != -1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>300</td><td class='code'>            char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>301</td><td class='code'>            char *fields[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>302</td><td class='code'>            parse_csv_row(tc-&gt;records[i], fields, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>303</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>304</td><td class='code'>            if (compare_value(fields[where_idx], stmt-&gt;where_val)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>305</td><td class='code'>                printf(&quot;%s\n&quot;, tc-&gt;records[i]);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>306</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>307</td><td class='code'>        } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>308</td><td class='code'>            printf(&quot;%s\n&quot;, tc-&gt;records[i]);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>309</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>310</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>311</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>312</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>313</td><td class='code'>void execute_update(Statement *stmt) {</td><td class='desc'>함수 `execute_update` 선언입니다. WHERE 조건 행을 찾아 set 값으로 갱신하고 저장합니다.</td></tr>
+<tr><td class='line'>314</td><td class='code'>    TableCache *tc = get_table(stmt-&gt;table_name);</td><td class='desc'>`get_table`: 테이블 캐시를 찾고 없으면 파일에서 헤더/레코드를 읽어 새로 생성합니다.</td></tr>
+<tr><td class='line'>315</td><td class='code'>    if (!tc) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>316</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>317</td><td class='code'>    int where_idx = get_col_idx(tc, stmt-&gt;where_col);</td><td class='desc'>`get_col_idx`: 컬럼 이름으로 컬럼 인덱스를 찾습니다.</td></tr>
+<tr><td class='line'>318</td><td class='code'>    int set_idx = get_col_idx(tc, stmt-&gt;set_col);</td><td class='desc'>`get_col_idx`: 컬럼 이름으로 컬럼 인덱스를 찾습니다.</td></tr>
+<tr><td class='line'>319</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>320</td><td class='code'>    if (where_idx == -1 || set_idx == -1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>321</td><td class='code'>        printf(&quot;[오류] 대상 컬럼을 찾을 수 없습니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>322</td><td class='code'>        return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>323</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>324</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>325</td><td class='code'>    if (set_idx == tc-&gt;pk_idx) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>326</td><td class='code'>        printf(&quot;[오류] PK(기본키)는 UPDATE로 변경할 수 없습니다. 종료합니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력 / `PK`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>327</td><td class='code'>        return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>328</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>329</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>330</td><td class='code'>    trim_and_unquote(stmt-&gt;set_val);</td><td class='desc'>`trim_and_unquote`: 문자열 공백/따옴표를 제거해 비교/저장용 형태로 정리합니다.</td></tr>
+<tr><td class='line'>331</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>332</td><td class='code'>    if (tc-&gt;cols[set_idx].type == COL_NN &amp;&amp; strlen(stmt-&gt;set_val) == 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>333</td><td class='code'>        printf(&quot;[오류] UPDATE 실패: &#x27;%s&#x27; (NN 제약).\n&quot;, tc-&gt;cols[set_idx].name);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>334</td><td class='code'>        return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>335</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>336</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>337</td><td class='code'>    int match_flags[MAX_RECORDS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>338</td><td class='code'>    int target_count = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>339</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>340</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;record_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>341</td><td class='code'>        char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>342</td><td class='code'>        char *f[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>343</td><td class='code'>        parse_csv_row(tc-&gt;records[i], f, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>344</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>345</td><td class='code'>        if (compare_value(f[where_idx], stmt-&gt;where_val)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>346</td><td class='code'>            match_flags[i] = 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>347</td><td class='code'>            target_count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>348</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>349</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>350</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>351</td><td class='code'>    if (tc-&gt;cols[set_idx].type == COL_UK) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>352</td><td class='code'>        if (target_count &gt; 1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>353</td><td class='code'>            printf(&quot;[오류] UPDATE 실패: 다수의 대상 행에 UK 중복 가능성 있습니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>354</td><td class='code'>            return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>355</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>356</td><td class='code'>        for (int r = 0; r &lt; tc-&gt;record_count; r++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>357</td><td class='code'>            if (match_flags[r]) continue;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>358</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>359</td><td class='code'>            char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>360</td><td class='code'>            char *f[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>361</td><td class='code'>            parse_csv_row(tc-&gt;records[r], f, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>362</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>363</td><td class='code'>            if (compare_value(f[set_idx], stmt-&gt;set_val)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>364</td><td class='code'>                printf(&quot;[오류] UPDATE 실패: &#x27;%s&#x27; 중복 (UK 제약).\n&quot;, stmt-&gt;set_val);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>365</td><td class='code'>                return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>366</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>367</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>368</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>369</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>370</td><td class='code'>    int count = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>371</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;record_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>372</td><td class='code'>        if (match_flags[i]) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>373</td><td class='code'>            char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>374</td><td class='code'>            char *fields[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>375</td><td class='code'>            parse_csv_row(tc-&gt;records[i], fields, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>376</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>377</td><td class='code'>            char new_row[1024] = &quot;&quot;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>378</td><td class='code'>            size_t offset = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>379</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>380</td><td class='code'>            for (int j = 0; j &lt; tc-&gt;col_count; j++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>381</td><td class='code'>                const char *val = (j == set_idx) ? stmt-&gt;set_val : (fields[j] ? fields[j] : &quot;&quot;);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>382</td><td class='code'>                int w = snprintf(new_row + offset, sizeof(new_row) - offset, &quot;%s%s&quot;, val, (j &lt; tc-&gt;col_count - 1) ? &quot;,&quot; : &quot;&quot;);</td><td class='desc'>변수 선언입니다. `val`: int w 형식 변수</td></tr>
+<tr><td class='line'>383</td><td class='code'>                if (w &lt; 0 || (size_t)w &gt;= sizeof(new_row) - offset) break;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>384</td><td class='code'>                offset += w;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>385</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>386</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>387</td><td class='code'>            strncpy(tc-&gt;records[i], new_row, 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>388</td><td class='code'>            tc-&gt;records[i][1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>389</td><td class='code'>            count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>390</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>391</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>392</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>393</td><td class='code'>    if (count &gt; 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>394</td><td class='code'>        rewrite_file(tc);</td><td class='desc'>`rewrite_file`: 캐시 상태를 전체 CSV 파일에 다시 기록합니다.</td></tr>
+<tr><td class='line'>395</td><td class='code'>        printf(&quot;[완료] %d건의 행이 갱신됨\n&quot;, count);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>396</td><td class='code'>    } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>397</td><td class='code'>        printf(&quot;[안내] 대상 행이 없습니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>398</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>399</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>400</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>401</td><td class='code'>void execute_delete(Statement *stmt) {</td><td class='desc'>함수 `execute_delete` 선언입니다. WHERE 조건 행을 삭제하고 남은 행으로 정리해 파일에 반영합니다.</td></tr>
+<tr><td class='line'>402</td><td class='code'>    TableCache *tc = get_table(stmt-&gt;table_name);</td><td class='desc'>`get_table`: 테이블 캐시를 찾고 없으면 파일에서 헤더/레코드를 읽어 새로 생성합니다.</td></tr>
+<tr><td class='line'>403</td><td class='code'>    if (!tc) return;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>404</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>405</td><td class='code'>    int where_idx = get_col_idx(tc, stmt-&gt;where_col);</td><td class='desc'>`get_col_idx`: 컬럼 이름으로 컬럼 인덱스를 찾습니다.</td></tr>
+<tr><td class='line'>406</td><td class='code'>    if (where_idx == -1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>407</td><td class='code'>        printf(&quot;[오류] 조건 컬럼을 찾을 수 없습니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>408</td><td class='code'>        return;</td><td class='desc'>함수를 종료하고 `;`를 반환합니다.</td></tr>
+<tr><td class='line'>409</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>410</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>411</td><td class='code'>    int count = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>412</td><td class='code'>    for (int i = 0; i &lt; tc-&gt;record_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>413</td><td class='code'>        char row_buf[1024];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>414</td><td class='code'>        char *fields[MAX_COLS] = {0};</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>415</td><td class='code'>        parse_csv_row(tc-&gt;records[i], fields, row_buf);</td><td class='desc'>`parse_csv_row`: CSV 한 줄을 필드 배열로 분해합니다.</td></tr>
+<tr><td class='line'>416</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>417</td><td class='code'>        if (compare_value(fields[where_idx], stmt-&gt;where_val)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>418</td><td class='code'>            for (int j = i; j &lt; tc-&gt;record_count - 1; j++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>419</td><td class='code'>                tc-&gt;pk_index[j] = tc-&gt;pk_index[j + 1];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>420</td><td class='code'>                strncpy(tc-&gt;records[j], tc-&gt;records[j + 1], 1023);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>421</td><td class='code'>                tc-&gt;records[j][1023] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>422</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>423</td><td class='code'>            tc-&gt;record_count--;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>424</td><td class='code'>            count++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>425</td><td class='code'>            i--;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>426</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>427</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>428</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>429</td><td class='code'>    if (count &gt; 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>430</td><td class='code'>        rewrite_file(tc);</td><td class='desc'>`rewrite_file`: 캐시 상태를 전체 CSV 파일에 다시 기록합니다.</td></tr>
+<tr><td class='line'>431</td><td class='code'>        printf(&quot;[완료] %d건이 삭제됨\n&quot;, count);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>432</td><td class='code'>    } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>433</td><td class='code'>        printf(&quot;[안내] 삭제 대상이 없습니다.\n&quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>434</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>435</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>436</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>437</td><td class='code'>void close_all_tables(void) {</td><td class='desc'>함수 `close_all_tables` 선언입니다. 열린 모든 파일 포인터를 닫아 자원 정리를 합니다.</td></tr>
+<tr><td class='line'>438</td><td class='code'>    for (int i = 0; i &lt; open_table_count; i++) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>439</td><td class='code'>        if (open_tables[i].file) fclose(open_tables[i].file);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>440</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>441</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+</tbody></table></section>
+<section><h2>main.c</h2><p class='note'>프로그램 시작점으로 SQL 파일을 읽고 실행하는 진입부입니다.</p>
+<table><thead><tr><th class='line'>Line</th><th class='code'>Code</th><th class='desc'>설명</th></tr></thead><tbody>
+<tr><td class='line'>1</td><td class='code'>#include &lt;stdio.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>2</td><td class='code'>#include &lt;string.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>3</td><td class='code'>#include &lt;ctype.h&gt;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>4</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>5</td><td class='code'>#include &quot;types.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>6</td><td class='code'>#include &quot;parser.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>7</td><td class='code'>#include &quot;executor.h&quot;</td><td class='desc'>전처리 지시문입니다.</td></tr>
+<tr><td class='line'>8</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>9</td><td class='code'>int main(int argc, char *argv[]) {</td><td class='desc'>함수 `main` 선언입니다. 입력 SQL 파일을 읽어 &#x27;;&#x27; 기준으로 문장 분리 후 파싱-실행을 반복합니다.</td></tr>
+<tr><td class='line'>10</td><td class='code'>    char filename[256];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>11</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>12</td><td class='code'>    if (argc &gt;= 2) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>13</td><td class='code'>        strncpy(filename, argv[1], 255);</td><td class='desc'>`strncpy`: 문자열 길이 제한 복사</td></tr>
+<tr><td class='line'>14</td><td class='code'>        filename[255] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>15</td><td class='code'>    } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>16</td><td class='code'>        printf(&quot;SQL 파일 경로: &quot;);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>17</td><td class='code'>        if (scanf(&quot;%255s&quot;, filename) != 1) return 1;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>18</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>19</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>20</td><td class='code'>    FILE *f = fopen(filename, &quot;r&quot;);</td><td class='desc'>`fopen`: 표준 파일 열기</td></tr>
+<tr><td class='line'>21</td><td class='code'>    if (!f) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>22</td><td class='code'>        printf(&quot;[에러] &#x27;%s&#x27; 파일을 열 수 없습니다.\n&quot;, filename);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>23</td><td class='code'>        return 1;</td><td class='desc'>함수를 종료하고 `1;`를 반환합니다.</td></tr>
+<tr><td class='line'>24</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>25</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>26</td><td class='code'>    char buf[MAX_SQL_LEN];</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>27</td><td class='code'>    int idx = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>28</td><td class='code'>    int q = 0;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>29</td><td class='code'>    int ch;</td><td class='desc'>변수 선언입니다. `ch`: int 형식 변수</td></tr>
+<tr><td class='line'>30</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>31</td><td class='code'>    while ((ch = fgetc(f)) != EOF) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>32</td><td class='code'>        if (ch == &#x27;-&#x27; &amp;&amp; !q) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>33</td><td class='code'>            int n = fgetc(f);</td><td class='desc'>`fgetc`: 한 글자 읽기</td></tr>
+<tr><td class='line'>34</td><td class='code'>            if (n == &#x27;-&#x27;) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>35</td><td class='code'>                while ((ch = fgetc(f)) != EOF &amp;&amp; ch != &#x27;\n&#x27;);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>36</td><td class='code'>                continue;</td><td class='desc'>현재 반복 단계의 나머지를 건너뛰고 다음 반복으로 넘어갑니다.</td></tr>
+<tr><td class='line'>37</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>38</td><td class='code'>            ungetc(n, f);</td><td class='desc'>`ungetc`: 사용자 정의 함수 호출</td></tr>
+<tr><td class='line'>39</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>40</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>41</td><td class='code'>        if (ch == &#x27;\&#x27;&#x27;) q = !q;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>42</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>43</td><td class='code'>        if (ch == &#x27;;&#x27; &amp;&amp; !q) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>44</td><td class='code'>            buf[idx] = &#x27;\0&#x27;;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>45</td><td class='code'>            char *s = buf;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>46</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>47</td><td class='code'>            while (isspace((unsigned char)*s)) s++;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>48</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>49</td><td class='code'>            if (strlen(s) &gt; 0) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>50</td><td class='code'>                Statement stmt;</td><td class='desc'>변수 선언입니다. `stmt`: 현재 SQL 한 문장의 분석 결과를 담은 Statement 포인터</td></tr>
+<tr><td class='line'>51</td><td class='code'>                if (parse_statement(s, &amp;stmt)) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>52</td><td class='code'>                    if (stmt.type == STMT_INSERT) execute_insert(&amp;stmt);</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>53</td><td class='code'>                    else if (stmt.type == STMT_SELECT) execute_select(&amp;stmt);</td><td class='desc'>`execute_select`: 조건 유무에 따라 전체/필터 조회를 출력합니다.</td></tr>
+<tr><td class='line'>54</td><td class='code'>                    else if (stmt.type == STMT_DELETE) execute_delete(&amp;stmt);</td><td class='desc'>`execute_delete`: WHERE 조건 행을 삭제하고 남은 행으로 정리해 파일에 반영합니다.</td></tr>
+<tr><td class='line'>55</td><td class='code'>                    else if (stmt.type == STMT_UPDATE) execute_update(&amp;stmt);</td><td class='desc'>`execute_update`: WHERE 조건 행을 찾아 set 값으로 갱신하고 저장합니다.</td></tr>
+<tr><td class='line'>56</td><td class='code'>                } else {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>57</td><td class='code'>                    printf(&quot;[안내] 유효하지 않은 SQL 문입니다. %s\n&quot;, s);</td><td class='desc'>`printf`: 표준 출력 출력</td></tr>
+<tr><td class='line'>58</td><td class='code'>                }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>59</td><td class='code'>            }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>60</td><td class='code'>            idx = 0;</td><td class='desc'>변수 `idx`에 `0`를 넣습니다. `idx`의 용도: 일반 순회 인덱스</td></tr>
+<tr><td class='line'>61</td><td class='code'>        } else if (idx &lt; MAX_SQL_LEN - 1) {</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>62</td><td class='code'>            buf[idx++] = (char)ch;</td><td class='desc'>코드 동작 라인입니다. 위/아래 문맥의 변수와 함수 호출 흐름으로 이해하면 됩니다.</td></tr>
+<tr><td class='line'>63</td><td class='code'>        }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>64</td><td class='code'>    }</td><td class='desc'>블록 끝입니다.</td></tr>
+<tr><td class='line'>65</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>66</td><td class='code'>    fclose(f);</td><td class='desc'>`fclose`: 표준 파일 닫기</td></tr>
+<tr><td class='line'>67</td><td class='code'>    close_all_tables();</td><td class='desc'>`close_all_tables`: 열린 모든 파일 포인터를 닫아 자원 정리를 합니다.</td></tr>
+<tr><td class='line'>68</td><td class='code'></td><td class='desc'>빈 줄</td></tr>
+<tr><td class='line'>69</td><td class='code'>    return 0;</td><td class='desc'>함수를 종료하고 `0;`를 반환합니다.</td></tr>
+<tr><td class='line'>70</td><td class='code'>}</td><td class='desc'>블록 끝입니다.</td></tr>
+</tbody></table></section>
+</main></body></html>

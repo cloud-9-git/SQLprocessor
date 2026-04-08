@@ -1,155 +1,71 @@
-# SQLprocessor
+﻿# SQLprocessor
 
-CSV 파일을 테이블처럼 다루는 간단한 C 기반 SQL 처리기입니다.
+CSV를 간단한 테이블처럼 다루는 경량 SQL 엔진입니다. `SELECT *`, `INSERT`, `UPDATE`, `DELETE`와 `(PK)/(UK)/(NN)` 제약을 지원합니다.
 
-지원 범위:
-- `INSERT`
-- `SELECT *`
-- `UPDATE`
-- `DELETE`
-- `PK`, `UK`, `NN` 제약 일부 검증
-- `WHERE column = value` 형태 조건식
+## 1) 한눈에 보는 동작
 
-## Build
+- 시작: `./sqlsprocessor <sql-file>` 실행
+- 처리: SQL 파일을 `;` 기준으로 문장 분리 (`'...'` 내부 세미콜론은 제외)
+- 실행: 문장을 파싱해 `SELECT/INSERT/UPDATE/DELETE` 중 하나로 분기
+- 결과: 메모리 캐시에서 작업 후 변경사항은 파일 전체 재기록
 
-```bash
-gcc sqlsprocessor.c -o sqlsprocessor
+## 2) 실행 순서
+
+1. `main`에서 파일을 라인/문자 단위로 읽음
+2. 주석(`--`) 제거, `;`로 문장 단위 추출
+3. `parse_statement`로 Statement 생성
+4. `get_table`로 대상 CSV 테이블 캐시 확보
+5. 문장 타입별 실행 함수 호출
+6. 필요 시 `rewrite_file`로 저장
+
+## 3) 지원 SQL
+
+```sql
+SELECT * FROM table_name [WHERE col = value];
+INSERT INTO table_name VALUES (v1, v2, ...);
+UPDATE table_name SET col = value [WHERE col = value];
+DELETE FROM table_name WHERE col = value;
 ```
 
-실행:
-
-```bash
-./sqlsprocessor case_basic_users_run.txt
-```
-
-인자를 주지 않으면 실행 중에 SQL 파일명을 입력받습니다.
-
-## Table Schema
-
-CSV 첫 줄은 스키마입니다.
-
-예시:
+## 4) CSV 스키마 예시와 제약
 
 ```csv
 id(PK),email(UK),phone(UK),pwd(NN),name
 ```
 
-의미:
-- `PK`: Primary Key
-- `UK`: Unique Key
-- `NN`: Not Null
+- `PK`: 중복 불가(INSERT 시 중복 거부)
+- `UK`: 중복 불가(INSERT/해당 UK UPDATE 시 중복 거부)
+- `NN`: 빈 값 불가
 
-## Test Files
+## 5) 핵심 구성요소 (중요 함수만)
 
-이번 테스트 세트는 파일명만 보고도 어떤 `txt`가 어떤 `csv`를 사용하는지 알 수 있게 맞춰 두었습니다.
+### 파싱/문장 해석
 
-규칙:
-- `case_name.csv`: 테스트 대상 데이터
-- `case_name_run.txt`: 실행용 SQL
-- `case_name_reset.txt`: 원래 상태로 복구하는 SQL
+- `parse_statement`: SQL 한 문장을 `Statement`로 변환
+- `get_next_token`/`parse_*`: 키워드/식별자/값 추출 및 문법 판별
+- `parse_where_clause`: `WHERE col = value` 처리
 
-현재 포함된 케이스:
-- `case_basic_users`
-- `case_constraints_users`
-- `case_quotes_users`
-- `case_products_items`
-- `case_invalid_users`
+### 테이블/캐시 관리
 
-## Test Matrix
+- `get_table`: `<table>.csv` 로드 후 컬럼·제약·레코드 캐시 생성 또는 재사용
+- `parse_csv_row`: CSV 한 줄을 컬럼별 값으로 분해
+- `get_col_idx`: 컬럼명으로 인덱스 탐색
+- `rewrite_file`: 캐시 상태를 CSV에 전면 저장
 
-### 1. Basic CRUD
+### 실행(데이터 조작)
 
-파일:
-- `case_basic_users.csv`
-- `case_basic_users_run.txt`
-- `case_basic_users_reset.txt`
+- `execute_select`: 조건 유무에 따라 전체/필터 조회
+- `execute_insert`: NN/PK/UK 검사 후 삽입
+- `execute_update`: 조건 행 갱신, PK 변경 불가, NN/UK 검사
+- `execute_delete`: 조건 행 삭제
 
-목적:
-- 기본 `INSERT`, `SELECT`, `UPDATE`, `DELETE` 확인
+### 유틸
 
-실행:
+- `trim_and_unquote`: 공백/따옴표 정리
+- `compare_value`: 비교 전 정규화 후 문자열 비교
+- `find_in_pk_index`: PK 중복 탐지 보조
 
-```bash
-./sqlsprocessor case_basic_users_run.txt
-./sqlsprocessor case_basic_users_reset.txt
-```
-
-### 2. Constraint Check
-
-파일:
-- `case_constraints_users.csv`
-- `case_constraints_users_run.txt`
-- `case_constraints_users_reset.txt`
-
-목적:
-- PK 중복
-- UK 중복
-- NN 위반
-- PK 컬럼 `UPDATE` 금지 여부
-
-실행:
-
-```bash
-./sqlsprocessor case_constraints_users_run.txt
-./sqlsprocessor case_constraints_users_reset.txt
-```
-
-### 3. Quoted Value
-
-파일:
-- `case_quotes_users.csv`
-- `case_quotes_users_run.txt`
-- `case_quotes_users_reset.txt`
-
-목적:
-- 따옴표 포함 값
-- 값 내부 쉼표 처리
-- quoted value로 `WHERE` / `UPDATE`
-
-실행:
-
-```bash
-./sqlsprocessor case_quotes_users_run.txt
-./sqlsprocessor case_quotes_users_reset.txt
-```
-
-### 4. Different Schema
-
-파일:
-- `case_products_items.csv`
-- `case_products_items_run.txt`
-- `case_products_items_reset.txt`
-
-목적:
-- `users` 외 다른 스키마에서도 동작하는지 확인
-
-실행:
-
-```bash
-./sqlsprocessor case_products_items_run.txt
-./sqlsprocessor case_products_items_reset.txt
-```
-
-### 5. Invalid Query
-
-파일:
-- `case_invalid_users.csv`
-- `case_invalid_users_run.txt`
-- `case_invalid_users_reset.txt`
-
-목적:
-- 지원하지 않는 SQL 문법 입력 시 처리 확인
-
-실행:
-
-```bash
-./sqlsprocessor case_invalid_users_run.txt
-./sqlsprocessor case_invalid_users_reset.txt
-```
-
-## Recommended Test Order
-
-초기화 후 실행하는 흐름을 권장합니다.
+## 6) 테스트 권장 순서
 
 ```bash
 ./sqlsprocessor case_basic_users_reset.txt
@@ -168,8 +84,9 @@ id(PK),email(UK),phone(UK),pwd(NN),name
 ./sqlsprocessor case_invalid_users_run.txt
 ```
 
-## Notes
+`run`은 동작 시나리오, `reset`은 상태 복원 시나리오입니다.
 
-- 각 `run` 파일은 대응되는 `csv`를 직접 수정합니다.
-- 같은 케이스를 반복 시험할 때는 먼저 대응되는 `reset` 파일을 실행하면 됩니다.
-- 현재 프로젝트 루트에 있던 기존 `users.csv`, `test.txt`는 별도 수동 테스트용으로 그대로 둘 수 있습니다.
+## 7) 핵심 제약사항
+
+- 입력 SQL 문법은 제한적이며, 조인/다중 조건/정렬/집계는 미지원
+- 최대치 초과(`MAX_RECORDS`, `MAX_SQL_LEN`) 시 안정성 저하 가능
