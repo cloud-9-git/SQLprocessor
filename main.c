@@ -81,3 +81,11 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+/*
+ * 일부 IDE/에디터는 "현재 파일만 컴파일" 방식으로 main.c 하나만 빌드합니다.
+ * 그 경우에도 바로 실행되도록 구현 파일을 여기서 함께 포함합니다.
+ */
+#include "lexer.c"
+#include "parser.c"
+#include "executor.c"

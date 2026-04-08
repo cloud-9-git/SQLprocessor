@@ -1,4 +1,0 @@
-DELETE FROM case_quotes_users WHERE id = 1;
-DELETE FROM case_quotes_users WHERE id = 2;
-INSERT INTO case_quotes_users VALUES (1, 'tony,stark@test.com', '010-7777', 'jarvis', 'Tony Stark');
-INSERT INTO case_quotes_users VALUES (2, 'steve@test.com', '010-8888', 'shield', 'Steve Rogers');

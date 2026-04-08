@@ -65,28 +65,19 @@ id(PK),email(UK),phone(UK),pwd(NN),name
 - `compare_value`: 비교 전 정규화 후 문자열 비교
 - `find_in_pk_index`: PK 중복 탐지 보조
 
-## 6) 테스트 권장 순서
+## 6) 데모 실행 순서
 
 ```bash
-gcc -fdiagnostics-color=always -g main.c lexer.c parser.c executor.c -o sqlsprocessor
+make
 
-./sqlsprocessor case_basic_users_reset.txt
-./sqlsprocessor case_basic_users_run.txt
-
-./sqlsprocessor case_constraints_users_reset.txt
-./sqlsprocessor case_constraints_users_run.txt
-
-./sqlsprocessor case_quotes_users_reset.txt
-./sqlsprocessor case_quotes_users_run.txt
-
-./sqlsprocessor case_products_items_reset.txt
-./sqlsprocessor case_products_items_run.txt
-
-./sqlsprocessor case_invalid_users_reset.txt
-./sqlsprocessor case_invalid_users_run.txt
+./sqlsprocessor demo_reset.sql
+./sqlsprocessor demo_select.sql
+./sqlsprocessor demo_insert.sql
+./sqlsprocessor demo_update.sql
+./sqlsprocessor demo_delete.sql
 ```
 
-`run`은 동작 시나리오, `reset`은 상태 복원 시나리오입니다.
+`demo_reset.sql`은 기준 상태 복원용이고, `demo_select.sql`, `demo_insert.sql`, `demo_update.sql`, `demo_delete.sql`은 기능별 시연용입니다.
 
 ## 7) 핵심 제약사항
 

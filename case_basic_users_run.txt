@@ -1,7 +1,0 @@
-SELECT * FROM case_basic_users;
-INSERT INTO case_basic_users VALUES (4, 'newuser@test.com', '010-4444', 'pw4444', 'NewUser');
-SELECT * FROM case_basic_users WHERE id = 4;
-UPDATE case_basic_users SET name = 'Updated User' WHERE id = 4;
-SELECT * FROM case_basic_users WHERE id = 4;
-DELETE FROM case_basic_users WHERE id = 4;
-SELECT * FROM case_basic_users;

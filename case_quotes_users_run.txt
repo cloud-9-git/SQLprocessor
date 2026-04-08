@@ -1,4 +1,0 @@
-SELECT * FROM case_quotes_users;
-SELECT * FROM case_quotes_users WHERE email = 'tony,stark@test.com';
-UPDATE case_quotes_users SET name = 'Iron Man' WHERE email = 'tony,stark@test.com';
-SELECT * FROM case_quotes_users WHERE email = 'tony,stark@test.com';

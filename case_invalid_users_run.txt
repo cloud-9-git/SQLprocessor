@@ -1,4 +1,0 @@
-SELECT name FROM case_invalid_users;
-INSERT case_invalid_users VALUES (5, 'bad@test.com', '010-5555', 'pw5555', 'Bad');
-UPDATE case_invalid_users name = Broken WHERE id = 1;
-DELETE case_invalid_users WHERE id = 1;
