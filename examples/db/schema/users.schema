@@ -1,0 +1,5 @@
+version 1
+table users
+column id INT
+column name TEXT
+column active BOOL
