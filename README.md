@@ -2,7 +2,8 @@
 
 > SQL 텍스트 파일을 입력받아 파싱하고, 실행하고, CSV 파일에 저장하는 C 기반 SQL 처리기.
 
-<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/e2e0e63b-4685-4558-8705-d39bb89bda4e" />
+<img width="1146" height="646" alt="스크린샷 198" src="https://github.com/user-attachments/assets/d84c1978-55fe-4fde-ba7e-b527d57bee28" />
+
 
 
 ## 한눈에 보기
